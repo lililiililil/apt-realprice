@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>서울·경기·인천 아파트 가치 고찰 시뮬레이터 v7.8</title>
+    <title>서울·경기·인천 아파트 가치 고찰 시뮬레이터 v8.2</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -67,7 +67,7 @@
                 <h1 class="text-xl md:text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-sky-400 to-emerald-400">
                     서울·경기·인천 아파트 가치 시뮬레이터
                 </h1>
-                <p class="text-xs text-slate-400 mt-0.5">Gemini AI 입지 진단 센터 & 무손실 감사 로그 복원 시스템 v7.8</p>
+                <p class="text-xs text-slate-400 mt-0.5">Gemini AI 입지 진단 센터 & 무손실 감사 로그 복원 시스템 v8.2</p>
             </div>
         </div>
         
@@ -81,21 +81,12 @@
                 <span id="db-status-text">서버 연결 상태 점검 중...</span>
             </div>
 
-            <!-- Google Authentication Area -->
-            <div id="google-auth-container" class="flex items-center gap-2">
-                <button id="btn-google-login" class="text-xs font-extrabold bg-white hover:bg-slate-100 text-slate-900 px-3.5 py-2 rounded-lg border border-slate-200 transition duration-200 flex items-center gap-2 active:scale-95 shadow-md">
-                    <i class="fa-brands fa-google text-red-500"></i> 구글 로그인 (AI 활성화)
+            <!-- API Settings Indicator -->
+            <div id="api-status-container" class="flex items-center gap-2">
+                <button id="btn-api-config" class="text-xs font-extrabold bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-lg border border-slate-700 transition duration-200 flex items-center gap-2 active:scale-95 shadow-md">
+                    <i id="header-api-icon" class="fa-solid fa-key text-amber-400"></i>
+                    <span id="header-api-text">🔑 API 키 미등록</span>
                 </button>
-                <div id="user-profile-box" class="hidden flex items-center gap-2.5 bg-slate-950/60 border border-slate-800 rounded-lg p-1.5 pr-3">
-                    <img id="user-avatar" src="" alt="Profile" class="w-7 h-7 rounded-full border border-slate-700">
-                    <div class="text-left hidden sm:block">
-                        <span id="user-name" class="text-[11px] font-bold text-slate-200 block max-w-[80px] truncate">사용자</span>
-                        <span class="text-[8px] text-emerald-400 block font-semibold">✨ AI 엔진 잠금해제</span>
-                    </div>
-                    <button id="btn-google-logout" class="text-xs text-slate-500 hover:text-rose-400 transition ml-2 p-1" title="로그아웃">
-                        <i class="fa-solid fa-right-from-bracket"></i>
-                    </button>
-                </div>
             </div>
 
             <!-- Audit Log History Button -->
@@ -127,7 +118,7 @@
                 <!-- Basic Meta Info (Nickname, Region, District, Complex Name, Type) -->
                 <div class="grid grid-cols-2 gap-3.5">
                     <div class="col-span-2">
-                        <label class="text-xs text-slate-400 font-semibold block mb-1">작성자 닉네임 (실시간 로그 식별용)</label>
+                        <label class="text-xs text-slate-400 font-semibold block mb-1">작성자 닉네임 <span class="text-indigo-400 font-bold">(수동 저장 시 필수)</span></label>
                         <div class="relative">
                             <i class="fa-solid fa-user absolute left-3 top-3 text-slate-500 text-xs"></i>
                             <input type="text" id="input-author" placeholder="닉네임을 입력해 주세요" 
@@ -149,25 +140,25 @@
                         </select>
                     </div>
                     <div class="col-span-2">
-                        <label class="text-xs text-slate-400 font-semibold block mb-1">아파트 단지명</label>
+                        <label class="text-xs text-slate-400 font-semibold block mb-1">아파트 단지명 <span class="text-purple-400 font-extrabold select-none">(★ AI 검색창 겸용)</span></label>
                         <div class="relative">
                             <i class="fa-solid fa-building absolute left-3 top-3 text-slate-500 text-xs"></i>
-                            <input type="text" id="input-apt-name" placeholder="예: 은마아파트, 래미안푸르지오" 
-                                class="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-slate-200 transition">
+                            <input type="text" id="input-apt-name" placeholder="검색 또는 입력 (예: 마래푸, 대치은마, 자양하늘채)" 
+                                class="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-slate-200 transition font-bold placeholder-slate-600">
                         </div>
                     </div>
                     <div class="col-span-2">
-                        <label class="text-xs text-slate-400 font-semibold block mb-1">평형 및 타입 규격</label>
+                        <label class="text-xs text-slate-400 font-semibold block mb-1">평형 및 타입 규격 <span class="text-slate-500">(비워두면 AI가 전용84㎡ 국평 기준 탐색)</span></label>
                         <div class="relative">
                             <i class="fa-solid fa-cubes absolute left-3 top-3 text-slate-500 text-xs"></i>
-                            <input type="text" id="input-size-type" placeholder="예: 34평형 A타입, 전용 84㎡" 
+                            <input type="text" id="input-size-type" placeholder="예: 34평형 A타입, 전용 59 (공백 가능)" 
                                 class="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-slate-200 transition">
                         </div>
                     </div>
                 </div>
 
                 <!-- ✨ AI Autofill Trigger Button -->
-                <button id="btn-ai-autofill" class="w-full bg-slate-900/90 hover:bg-slate-850 text-indigo-400 hover:text-indigo-300 py-3 rounded-xl font-bold text-xs border border-indigo-500/20 hover:border-indigo-500/40 transition duration-200 flex items-center justify-center gap-2 active:scale-[0.98]">
+                <button id="btn-ai-autofill" class="w-full bg-slate-900/90 hover:bg-slate-850 text-indigo-400 hover:text-indigo-300 py-3 rounded-xl font-extrabold text-xs border border-indigo-500/20 hover:border-indigo-500/40 transition duration-200 flex items-center justify-center gap-2 active:scale-[0.98]">
                     <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i> <span id="btn-ai-autofill-text">✨ AI 단지 정보 원클릭 자동 완성</span>
                 </button>
 
@@ -184,7 +175,7 @@
                             <span class="text-sm font-bold text-emerald-400 font-mono" id="val-land-area">15 평</span>
                         </div>
                         <input type="range" id="slide-land-area" min="1" max="50" step="0.1" value="15" 
-                            class="w-full accent-emerald-500 bg-slate-950 h-1.5 rounded-lg appearance-none cursor-pointer">
+                            class="w-full accent-emerald-500 bg-slate-955 h-1.5 rounded-lg appearance-none cursor-pointer">
                     </div>
 
                     <!-- Supply Size -->
@@ -199,7 +190,7 @@
                             </div>
                         </div>
                         <input type="range" id="slide-supply-size" min="10" max="100" step="1" value="34" 
-                            class="w-full accent-sky-500 bg-slate-950 h-1.5 rounded-lg appearance-none cursor-pointer">
+                            class="w-full accent-sky-500 bg-slate-955 h-1.5 rounded-lg appearance-none cursor-pointer">
                     </div>
 
                     <!-- Pyeong Construction Price -->
@@ -211,7 +202,7 @@
                             <span class="text-sm font-bold text-amber-400 font-mono" id="val-construction-price">1,000 만원</span>
                         </div>
                         <input type="range" id="slide-construction-price" min="500" max="2000" step="50" value="1000" 
-                            class="w-full accent-amber-500 bg-slate-950 h-1.5 rounded-lg appearance-none cursor-pointer">
+                            class="w-full accent-amber-500 bg-slate-955 h-1.5 rounded-lg appearance-none cursor-pointer">
                     </div>
 
                     <!-- Building Age -->
@@ -238,7 +229,7 @@
                             <span class="text-sm font-bold text-indigo-400 font-mono" id="val-villa-land-price">3,500 만원</span>
                         </div>
                         <input type="range" id="slide-villa-land-price" min="1000" max="15000" step="100" value="3500" 
-                            class="w-full accent-indigo-500 bg-slate-950 h-1.5 rounded-lg appearance-none cursor-pointer">
+                            class="w-full accent-indigo-500 bg-slate-955 h-1.5 rounded-lg appearance-none cursor-pointer">
                     </div>
 
                     <!-- Households -->
@@ -253,7 +244,7 @@
                             </div>
                         </div>
                         <input type="range" id="slide-households" min="10" max="10000" step="10" value="1000" 
-                            class="w-full accent-teal-500 bg-slate-950 h-1.5 rounded-lg appearance-none cursor-pointer">
+                            class="w-full accent-teal-500 bg-slate-955 h-1.5 rounded-lg appearance-none cursor-pointer">
                     </div>
 
                     <!-- Market Price -->
@@ -265,7 +256,7 @@
                             <span class="text-sm font-bold text-purple-400 font-mono" id="val-market-price">10.0 억원</span>
                         </div>
                         <input type="range" id="slide-market-price" min="1" max="100" step="0.1" value="10" 
-                            class="w-full accent-purple-500 bg-slate-950 h-1.5 rounded-lg appearance-none cursor-pointer">
+                            class="w-full accent-purple-500 bg-slate-955 h-1.5 rounded-lg appearance-none cursor-pointer">
                     </div>
                 </div>
 
@@ -289,12 +280,12 @@
 
                 <!-- Real-time metrics dashboard grid -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-slate-950/80 border border-slate-850 p-4 rounded-xl flex flex-col justify-center">
+                    <div class="bg-slate-955/80 border border-slate-850 p-4 rounded-xl flex flex-col justify-center">
                         <span class="text-xs text-slate-400 font-semibold">수학적 적정 내재 가치</span>
                         <span id="output-model-val" class="text-2xl font-black text-emerald-400 mt-1 font-mono">0.0 억원</span>
                         <span class="text-[10px] text-slate-500 mt-0.5">[(땅값+건물값) × Pm]</span>
                     </div>
-                    <div class="bg-slate-950/80 border border-slate-850 p-4 rounded-xl flex flex-col justify-center">
+                    <div class="bg-slate-955/80 border border-slate-850 p-4 rounded-xl flex flex-col justify-center">
                         <span class="text-xs text-slate-400 font-semibold">현재 시장 거래 호가</span>
                         <span id="output-market-val" class="text-2xl font-black text-purple-400 mt-1 font-mono">0.0 억원</span>
                         <span class="text-[10px] text-slate-500 mt-0.5">사용자 입력 슬라이더 값</span>
@@ -313,7 +304,7 @@
                         <span id="chart-total-text" class="text-slate-300 text-[10px] font-mono">합계: 100%</span>
                     </span>
                     <!-- Bar -->
-                    <div class="w-full h-8 bg-slate-950 rounded-lg overflow-hidden flex shadow-inner border border-slate-900">
+                    <div class="w-full h-8 bg-slate-955 rounded-lg overflow-hidden flex shadow-inner border border-slate-900">
                         <div id="bar-land" class="h-full bg-emerald-500 transition-all duration-300 relative group cursor-pointer" style="width: 30%"></div>
                         <div id="bar-building" class="h-full bg-amber-500 transition-all duration-300 relative group cursor-pointer" style="width: 20%"></div>
                         <div id="bar-premium" class="h-full bg-teal-500 transition-all duration-300 relative group cursor-pointer" style="width: 25%"></div>
@@ -376,12 +367,12 @@
                 
                 <div class="border-b border-slate-800/80 pb-3 flex justify-between items-center mb-4">
                     <h2 class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400 flex items-center gap-2 select-none">
-                        <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> ✨ Gemini AI 종합 진단 센터
+                        <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> ✨ Gemini AI 종합 입지 분석 소장
                     </h2>
                 </div>
                 
                 <p class="text-xs text-slate-400 leading-relaxed mb-4">
-                    현재 시뮬레이터에 세팅된 개별 아파트 스펙 및 시장 격차($\alpha$) 분석 데이터와 실시간 구글 검색(Google Grounding)을 결합하여, 최고급 입지·투자 진단 리포트를 생성합니다.
+                    현재 시뮬레이터에 장착된 개별 부동산 변수와 호가 가치 괴리($\alpha$)를 최신 검색 모델(Google Grounding)과 연동하여 정밀 입지 밸류에이션 리포트를 출력합니다.
                 </p>
 
                 <div class="flex flex-col gap-4">
@@ -391,7 +382,7 @@
                     </button>
 
                     <!-- Loading State -->
-                    <div id="ai-loading" class="hidden flex flex-col items-center justify-center py-8 gap-4 bg-slate-950/40 border border-slate-850 rounded-xl">
+                    <div id="ai-loading" class="hidden flex flex-col items-center justify-center py-8 gap-4 bg-slate-955/40 border border-slate-850 rounded-xl">
                         <div class="relative flex items-center justify-center">
                             <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
                             <i class="fa-solid fa-wand-magic-sparkles text-purple-400 absolute text-sm animate-ping"></i>
@@ -403,7 +394,7 @@
                     </div>
 
                     <!-- AI Report Output Area -->
-                    <div id="ai-report-area" class="hidden flex flex-col gap-4 bg-slate-950/80 p-5 rounded-xl border border-slate-850 max-h-[500px] overflow-y-auto">
+                    <div id="ai-report-area" class="hidden flex flex-col gap-4 bg-slate-955/80 p-5 rounded-xl border border-slate-850 max-h-[500px] overflow-y-auto">
                         <div class="flex justify-between items-center border-b border-slate-850 pb-2">
                             <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5 select-none">
                                 <i class="fa-solid fa-file-invoice-dollar animate-pulse"></i> Gemini AI 자산 종합 분석서
@@ -453,7 +444,7 @@
             <div class="overflow-x-auto w-full border border-slate-850 rounded-xl bg-slate-950/40">
                 <table class="w-full text-left text-xs border-collapse">
                     <thead>
-                        <tr class="bg-slate-950/90 text-slate-400 font-semibold uppercase border-b border-slate-850 select-none">
+                        <tr class="bg-slate-955/90 text-slate-400 font-semibold uppercase border-b border-slate-850 select-none">
                             <th class="py-3 px-4 cursor-pointer hover:bg-slate-900 transition" onclick="sortTable('region')">도/시 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-40"></i></th>
                             <th class="py-3 px-4 cursor-pointer hover:bg-slate-900 transition" onclick="sortTable('district')">상세 자치구 (지역) <i class="fa-solid fa-sort text-[10px] ml-1 opacity-40"></i></th>
                             <th class="py-3 px-4 cursor-pointer hover:bg-slate-900 transition" onclick="sortTable('name')">단지명 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-40"></i></th>
@@ -487,7 +478,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 my-4">
                 <!-- Formula Cards -->
-                <div class="bg-slate-950/60 border border-slate-850 p-6 rounded-xl flex flex-col gap-4">
+                <div class="bg-slate-955/60 border border-slate-850 p-6 rounded-xl flex flex-col gap-4">
                     <span class="text-xs text-indigo-400 font-extrabold tracking-wider uppercase">대표 통합 밸류에이션 수식</span>
                     <div class="text-center bg-slate-950 p-4 rounded-lg border border-slate-850 font-mono text-base text-emerald-400">
                         $$V = \big[ \text{땅값}(L) + \text{건물값}(B) \big] \times P_m + \alpha$$
@@ -501,7 +492,7 @@
                     </ul>
                 </div>
 
-                <div class="bg-slate-950/60 border border-slate-850 p-6 rounded-xl flex flex-col gap-4">
+                <div class="bg-slate-955/60 border border-slate-850 p-6 rounded-xl flex flex-col gap-4">
                     <span class="text-xs text-indigo-400 font-extrabold tracking-wider uppercase">보정 필터 및 디테일 공식</span>
                     <div class="flex flex-col gap-4">
                         <div>
@@ -558,6 +549,46 @@
         </div>
     </div>
 
+    <!-- 🔑 Custom API Config Modal Overlay -->
+    <div id="modal-api-config" class="fixed inset-0 bg-slate-950/95 z-[60] flex items-center justify-center p-4 hidden">
+        <div class="max-w-md w-full bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-2xl flex flex-col gap-4">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-slate-200 flex items-center gap-2">
+                    <i class="fa-solid fa-key text-purple-400"></i> Gemini AI API 키 연동 설정
+                </h3>
+                <button id="btn-close-api-config" class="text-slate-400 hover:text-slate-200 transition p-1">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="flex flex-col gap-3.5 text-xs leading-relaxed text-slate-400">
+                <p>
+                    이 기기 브라우저 전용 로컬 저장소에 키를 보관하여 안전하게 사용합니다. 입력한 키는 절대 외부 서버에 수집되거나 노출되지 않습니다.
+                </p>
+
+                <!-- Help Button Link to Google AI Studio -->
+                <a href="https://aistudio.google.com/app/apikey" target="_blank" rel="noopener noreferrer" class="w-full text-center bg-indigo-950 hover:bg-indigo-900 border border-indigo-500/30 text-indigo-300 font-extrabold py-3 rounded-xl transition duration-200 flex items-center justify-center gap-1.5 active:scale-[0.98]">
+                    <i class="fa-solid fa-external-link-alt"></i> 🔑 Google AI Studio에서 3초만에 무료 키 발급받기
+                </a>
+
+                <div class="border-t border-slate-850 my-1"></div>
+                
+                <div>
+                    <label class="text-xs text-slate-200 font-bold block mb-1">🔑 나의 개인 Gemini API Key 입력</label>
+                    <input type="password" id="input-api-key" placeholder="AIzaSy... 형태의 API 키를 입력하세요"
+                        class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-indigo-500 text-slate-200 font-mono">
+                    <p class="text-[10px] text-slate-500 mt-1">
+                        * 브라우저 영구보증 세션(LocalStorage)을 통해 수동 삭제 전까지 상시 유지됩니다.
+                    </p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2 mt-2">
+                <!-- Delete & Save Buttons -->
+                <button id="btn-delete-api-key" class="px-4 py-2 bg-rose-950/40 hover:bg-rose-900 border border-rose-900/40 text-rose-300 text-xs font-bold rounded-lg transition active:scale-95">API 키 삭제</button>
+                <button id="btn-save-api-key" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold rounded-lg shadow-md transition active:scale-95">설정 저장</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notification Wrapper -->
     <div id="toast-container" class="fixed bottom-6 left-6 z-[100] flex flex-col gap-2 pointer-events-none"></div>
 
@@ -584,8 +615,8 @@
     <!-- Firebase SDK Script Blocks -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, signInAnonymously, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         // 사용자 제공 파이어베이스 설정 정보 완전 연동
         const firebaseConfig = {
@@ -604,7 +635,6 @@
         let apartmentsCollection = null;
         let logsCollection = null;
         let useFirebase = false;
-        const googleProvider = new GoogleAuthProvider();
 
         // Dynamic 2-Tier Cascading Location Mappings with specific sub-regions bundled in parentheses
         const districtMap = {
@@ -747,16 +777,21 @@
         const btnAIAutofill = document.getElementById("btn-ai-autofill");
         const btnAIAutofillText = document.getElementById("btn-ai-autofill-text");
 
-        // Google Authentication Elements
-        const btnGoogleLogin = document.getElementById("btn-google-login");
-        const userProfileBox = document.getElementById("user-profile-box");
-        const userAvatar = document.getElementById("user-avatar");
-        const userName = document.getElementById("user-name");
-        const btnGoogleLogout = document.getElementById("btn-google-logout");
+        // 🔑 API Config Modal Elements
+        const btnApiConfig = document.getElementById("btn-api-config");
+        const modalApiConfig = document.getElementById("modal-api-config");
+        const btnCloseApiConfig = document.getElementById("btn-close-api-config");
+        const inputApiKey = document.getElementById("input-api-key");
+        const btnSaveApiKey = document.getElementById("btn-save-api-key");
+        const btnDeleteApiKey = document.getElementById("btn-delete-api-key");
+
+        const headerApiIcon = document.getElementById("header-api-icon");
+        const headerApiText = document.getElementById("header-api-text");
 
         // 📡 Custom Toast Notifications
         function showToast(message, type = "info") {
             const container = document.getElementById("toast-container");
+            if (!container) return;
             const toast = document.createElement("div");
             
             let bgClass = "bg-slate-900 border-slate-800 text-slate-300";
@@ -971,6 +1006,61 @@
             s.addEventListener("input", runRealTimeAnalysis);
         });
 
+        // 🔑 API Config Modal Listeners
+        btnApiConfig.addEventListener("click", () => {
+            inputApiKey.value = localStorage.getItem("user_gemini_api_key") || "";
+            modalApiConfig.classList.remove("hidden");
+        });
+        btnCloseApiConfig.addEventListener("click", () => {
+            modalApiConfig.classList.add("hidden");
+        });
+        btnSaveApiKey.addEventListener("click", () => {
+            const key = inputApiKey.value.trim();
+            if (key) {
+                localStorage.setItem("user_gemini_api_key", key);
+                showToast("Gemini API 수동 키가 저장되었습니다. (해당 컴퓨터에 유지됨)", "success");
+            } else {
+                localStorage.removeItem("user_gemini_api_key");
+                showToast("수동 키가 성공적으로 삭제되었습니다.", "info");
+            }
+            updateApiStatusUI();
+            modalApiConfig.classList.add("hidden");
+        });
+
+        // 🔒 원클릭 API 키 삭제 연산 기능 (Shred)
+        btnDeleteApiKey.addEventListener("click", () => {
+            localStorage.removeItem("user_gemini_api_key");
+            inputApiKey.value = "";
+            updateApiStatusUI();
+            showToast("보안 세션에서 API 키가 영구적으로 파쇄 삭제되었습니다.", "success");
+            modalApiConfig.classList.add("hidden");
+        });
+
+        // 🔑 Get active api key helper (No DB queries, pure LocalStorage)
+        function getActiveApiKey() {
+            return localStorage.getItem("user_gemini_api_key") || "";
+        }
+
+        // Update Header API Configuration indicator
+        function updateApiStatusUI() {
+            const key = getActiveApiKey();
+            if (key) {
+                headerApiIcon.className = "fa-solid fa-wand-magic-sparkles text-emerald-400";
+                headerApiText.textContent = "✨ AI 엔진 가동 중";
+                headerApiText.className = "text-emerald-400 font-extrabold";
+            } else {
+                headerApiIcon.className = "fa-solid fa-key text-amber-400";
+                headerApiText.textContent = "🔑 API 키 미등록";
+                headerApiText.className = "text-slate-200 font-bold";
+            }
+        }
+
+        // Check if API Key configured locally
+        function checkApiKeyConfigured() {
+            const key = getActiveApiKey();
+            return key.length > 0;
+        }
+
         // Initialize App flow
         async function initApp() {
             populateDistrictOptions();
@@ -978,6 +1068,8 @@
 
             const badge = document.getElementById("db-status-badge");
             const badgeText = document.getElementById("db-status-text");
+
+            updateApiStatusUI();
 
             try {
                 // Initialize Firebase
@@ -989,35 +1081,15 @@
                 apartmentsCollection = collection(db, "artifacts", "apt-real-price", "public", "data", "apartments");
                 logsCollection = collection(db, "artifacts", "apt-real-price", "public", "data", "logs");
 
-                // Authentication Listener to seamlessly handle anonymous and 구글 로그인 (Rule 3)
+                // Authentication Listener to seamlessly handle anonymous session (Rule 3)
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
-                        writeDebugLog(`사용자 변경 감지됨. UID: ${user.uid}`);
-                        
-                        if (user.isAnonymous) {
-                            // Anonymous user logged in
-                            btnGoogleLogin.classList.remove("hidden");
-                            userProfileBox.classList.add("hidden");
-                            badge.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400";
-                            badgeText.textContent = "실시간 서버 연동 모드 (익명)";
-                        } else {
-                            // Google user logged in
-                            btnGoogleLogin.classList.add("hidden");
-                            userProfileBox.classList.remove("hidden");
-                            userAvatar.src = user.photoURL || "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/user.svg";
-                            userName.textContent = user.displayName || "구글 유저";
-                            
-                            // Automatically autofill nickname with Google Name for premium feel
-                            if (!elAuthor.value.trim() || elAuthor.value === "무명씨") {
-                                elAuthor.value = user.displayName || "";
-                            }
-                            
-                            badge.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400";
-                            badgeText.textContent = "실시간 서버 연동 모드 (Google)";
-                        }
+                        writeDebugLog(`클라우드 세션 확보 완료. UID: ${user.uid}`);
+                        badge.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400";
+                        badgeText.textContent = "실시간 서버 연동 중 (익명)";
                     } else {
                         // Not logged in at all, trigger anonymous login to secure database sync (Rule 3)
-                        writeDebugLog("구글/익명 권한 유실. 익명 세션 재획득 중...");
+                        writeDebugLog("권한 유실. 익명 세션 재획득 중...");
                         await signInAnonymously(auth);
                     }
                 });
@@ -1061,52 +1133,11 @@
                 useFirebase = false;
                 badge.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 border border-amber-500/30 text-amber-400";
                 badgeText.textContent = "로컬 단독 가동 모드";
-                btnGoogleLogin.classList.add("hidden");
                 
                 loadLocalStorageFallback();
             }
 
             runRealTimeAnalysis();
-        }
-
-        // 구글 로그인 트리거 함수
-        async function handleGoogleLogin() {
-            try {
-                writeDebugLog("구글 인증 창 활성화 중...");
-                const result = await signInWithPopup(auth, googleProvider);
-                showToast(`${result.user.displayName}님 로그인에 성공했습니다. AI 잠금이 해제되었습니다!`, "success");
-            } catch (e) {
-                console.error("구글 로그인 에러:", e);
-                writeDebugLog(`구글 로그인 실패: ${e.message}`, true);
-                showToast("구글 로그인 팝업이 거부되었거나 실패했습니다.", "error");
-            }
-        }
-
-        // 구글 로그아웃 (익명 로그인으로 복귀)
-        async function handleGoogleLogout() {
-            const proc = await showCustomConfirm("구글 로그아웃", "구글 계정을 로그아웃하시겠습니까? 데이터 확인은 익명 계정으로 계속 가능하나 AI 기능은 다시 잠금 처리됩니다.");
-            if (!proc) return;
-
-            try {
-                writeDebugLog("구글 로그아웃 실행 중...");
-                await signOut(auth);
-                showToast("로그아웃되었습니다. AI 권한이 환수되었습니다.", "info");
-            } catch (e) {
-                console.error("로그아웃 에러:", e);
-                showToast("로그아웃 과정에서 예외 에러가 발생했습니다.", "error");
-            }
-        }
-
-        // Google Authentication DOM Event Binding
-        btnGoogleLogin.addEventListener("click", handleGoogleLogin);
-        btnGoogleLogout.addEventListener("click", handleGoogleLogout);
-
-        // 구글 로그인 인증 여부 판독 도우미 함수 (AI 가드 역할)
-        function checkGoogleAuthRequired() {
-            if (!auth || !auth.currentUser || auth.currentUser.isAnonymous) {
-                return false; // 구글 실계정 인증이 되어있지 않음
-            }
-            return true;
         }
 
         function loadLocalStorageFallback() {
@@ -1252,13 +1283,26 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
         };
 
-        // Custom save CRUD function supporting Logging
+        // Custom save CRUD function supporting Logging (Strict manual checks applied during SAVE)
         btnSave.addEventListener("click", async () => {
-            const author = elAuthor.value.trim() || "무명씨";
+            const author = elAuthor.value.trim();
             const name = elAptName.value.trim();
             const sizeType = elSizeType.value.trim() || "34평형";
             const region = elRegion.value;
             const district = elDistrict.value;
+
+            // Manual adjustment validator checks
+            if (!author || author === "" || author === "비공개") {
+                showToast("수동 저장 시에는 감사 로그 기록을 위해 작성자 닉네임을 꼭 입력해 주셔야 합니다.", "error");
+                elAuthor.focus();
+                return;
+            }
+
+            if (!region || !district) {
+                showToast("수동 저장 시에는 아파트의 정확한 행정구역(시·도 및 시·군·구)을 설정해 주셔야 합니다.", "error");
+                elRegion.focus();
+                return;
+            }
 
             if (!name) {
                 showToast("아파트 단지 이름을 바르게 기입하세요.", "error");
@@ -1531,7 +1575,11 @@
 
         // Fetch using Exponential Backoff (Up to 5 Retries)
         async function fetchGeminiWithBackoff(prompt, systemPrompt, customConfig = null) {
-            const apiKey = ""; // Left empty to be dynamically bound by environment
+            const apiKey = getActiveApiKey();
+            if (!apiKey) {
+                throw new Error("Gemini API 키가 설정되어 있지 않습니다. 우측 상단 '🔑 API 설정'을 통해 개인 키를 입력해 주세요.");
+            }
+            
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             const payload = {
                 contents: [{ parts: [{ text: prompt }] }],
@@ -1565,13 +1613,9 @@
 
         // Trigger AI Diagnosis Report Generation
         btnGenerateAI.addEventListener("click", async () => {
-            // [구글 로그인 가드라인 작동]
-            if (!checkGoogleAuthRequired()) {
-                const proceed = await showCustomConfirm(
-                    "🔐 구글 로그인 권한 필요", 
-                    "실시간 종합 AI 리포트 생성 및 분석 서비스는 무임승차 매크로 봇 방지를 위해 구글 로그인이 요구됩니다. 구글 계정으로 즉시 로그인해 볼까요?"
-                );
-                if (proceed) handleGoogleLogin();
+            if (!checkApiKeyConfigured()) {
+                showToast("AI 진단을 시작하기 위해 먼저 Gemini API 키를 등록해 주세요.", "error");
+                modalApiConfig.classList.remove("hidden");
                 return;
             }
 
@@ -1703,60 +1747,64 @@
             document.body.removeChild(textarea);
         });
 
-        // ----------------- ✨ Gemini AI Autofill Functionality -----------------
+        // ----------------- ✨ Gemini AI Autofill Functionality (Natural Language Search) -----------------
         btnAIAutofill.addEventListener("click", async () => {
-            // [구글 로그인 가드라인 작동]
-            if (!checkGoogleAuthRequired()) {
-                const proceed = await showCustomConfirm(
-                    "🔐 구글 로그인 권한 필요", 
-                    "실시간 AI 단지 정보 자동 완성은 무차별 매크로 봇 방지를 위해 구글 계정 인증이 요구됩니다. 구글 로그인 화면으로 가보시겠습니까?"
-                );
-                if (proceed) handleGoogleLogin();
+            if (!checkApiKeyConfigured()) {
+                showToast("실시간 AI 자동 완성 기능을 사용하려면 먼저 Gemini API 키를 등록해 주세요.", "error");
+                modalApiConfig.classList.remove("hidden");
                 return;
             }
 
-            const region = elRegion.value;
-            const district = elDistrict.value;
-            const aptName = elAptName.value.trim();
+            const aptQuery = elAptName.value.trim();
+            const userSizeType = elSizeType.value.trim();
 
-            if (!aptName) {
-                showToast("자동 완성을 위해 먼저 아파트 단지명을 조절기에 기입해 주세요.", "error");
+            if (!aptQuery) {
+                showToast("AI 고속 탐색을 위해 아파트 단지명을 자연어로 입력해 주세요. (예: 마래푸, 자양하늘채 등)", "error");
                 elAptName.focus();
                 return;
             }
 
             btnAIAutofill.disabled = true;
-            btnAIAutofillText.textContent = "Gemini AI가 인터넷에서 실시간 검색 중...";
-            showToast(`구글 실시간 검색을 통해 [${region} ${district} ${aptName}] 정보를 탐색합니다.`, "info");
-            writeDebugLog(`[AI 자동완성] ${region} ${district} ${aptName} 세부 데이터 탐색 시동`);
+            btnAIAutofillText.textContent = "Gemini AI가 자연어 맥락 탐색 중...";
+            showToast(`구글 실시간 검색을 통해 [${aptQuery}] 단지 스펙을 심층 추적합니다.`, "info");
+            writeDebugLog(`[AI 자연어 탐색] "${aptQuery}" 스펙 조사 가동`);
+
+            // If user did not type a pyeong target, default to National Pyeong (84㎡ / ~34평형)
+            const targetPyeong = userSizeType ? userSizeType : "국민평형 전용 84㎡ (공급 약 30~34평형)";
 
             const prompt = `
-            구글 검색(Google Grounding)을 통해 다음 아파트의 최신 부동산 상세 스펙을 정밀히 조사해줘:
-            - 행정 구역: ${region} ${district}
-            - 아파트 단지명: ${aptName}
+            구글 검색(Google Grounding)을 통해 다음 아파트의 최신 실제 부동산 상세 스펙을 정밀히 조사해줘:
+            - 아파트 검색어: ${aptQuery}
+            - 희망 평형 타겟: ${targetPyeong} (만약 희망 평형 타겟이 비어있거나 모호하면, 전용 84㎡ 국민평형 근처 세대의 스펙을 대표값으로 삼아줘.)
 
             조사할 주요 자산 스펙:
-            1. 평균 대지지분 (단위: 평)
-            2. 대표 공급평형 (단위: 평, 예: 34평, 24평 등 실제 대표 평형)
-            3. 준공년도 기준 현재 경과연수 (단위: 년차, 2026년 기준 계산)
-            4. 총 세대수 (단위: 세대)
-            5. 인근 빌라 평당 대지지분 가격 수준 (단위: 만원, 서울 최상급지 8000~13000, 마포/용산/성동 5000~8000, 외곽 및 경기/인천 2000~4500 범위에서 현실적인 가치 수렴)
-            6. 현재 대표 공급평형의 네이버 시세 또는 최근 실거래가 평균 수준 (단위: 억, 소수점 첫째자리까지 표시)
-            7. 평형 규격 명칭 (예: "34평형", "전용 84㎡")
+            1. 행정 구역 대분류 (반드시 "서울특별시", "경기도", "인천광역시" 중 하나여야 함)
+            2. 상세 행정 구역 및 대표 입지명 (상세 가이드: "마포구 (아현)", "연수구 (송도)", "강남구 (대치)", "성남시 분당구 (판교)" 등 구/시 명칭 뒤에 대표동 명칭을 괄호안에 넣은 포맷이어야 함. 아래 제공될 지역 리스트 중 하나와 가장 가까운 것으로 매칭해줘)
+            3. 평균 대지지분 (단위: 평)
+            4. 대표 공급평형 (단위: 평, 예: 34평, 24평 등 실제 대표 평형)
+            5. 준공년도 기준 현재 경과연수 (단위: 년차, 현재 2026년 기준 계산)
+            6. 총 세대수 (단위: 세대)
+            7. 인근 빌라 평당 대지지분 가격 수준 (단위: 만원, 서울 최상급지 8000~13000, 마포/용산/성동 5000~8000, 외곽 및 경기/인천 2000~4500 범위에서 현실적인 가치 수렴)
+            8. 현재 대표 공급평형의 네이버 시세 또는 최근 실거래가 평균 수준 (단위: 억, 소수점 첫째자리까지 표시)
+            9. 평형 규격 명칭 (예: "34평형", "전용 84㎡")
+
+            지원되는 상세 행정 구역 매핑 리스트:
+            ${JSON.stringify(districtMap, null, 2)}
             `;
 
             const systemPrompt = `
             너는 대한민국의 유능한 감정평가사 겸 AI 부동산 분석가이다.
-            사용자가 제시한 특정 아파트에 대해 실시간 구글 검색(Grounding)을 엄격히 동원하여 사실에 입각한 실제 정보를 취합한 뒤, 반드시 아래 명시된 JSON 규격과 부합하는 구조화된 오브젝트로만 반환하라.
+            사용자가 자연어로 입력한 특정 아파트에 대해 실시간 구글 검색(Grounding)을 엄격히 동원하여 사실에 입각한 실제 정보를 취합한 뒤, 반드시 아래 명시된 JSON 규격과 부합하는 구조화된 오브젝트로만 반환하라.
             다른 수사구나 부가 설명 없이, 마크다운 백틱 문장 기호(예: \`\`\`json) 조차 생략하고 오로지 하나의 JSON String만 직접 출력해야 한다.
             `;
 
-            // Structured JSON Schema for reliable Autofill (Syntax Corrected from '=' to ':')
             const customConfig = {
                 responseMimeType: "application/json",
                 responseSchema: {
                     type: "OBJECT",
                     properties: {
+                        region: { type: "STRING", description: "행정 구역 대분류 ('서울특별시', '경기도', '인천광역시' 중 택일)" },
+                        district: { type: "STRING", description: "상세 자치구 대표 구역 (예: '마포구 (아현)', '연수구 (송도)')" },
                         landArea: { type: "NUMBER", description: "평균 대지지분 숫자값 (평, 예: 12.5)" },
                         supplySize: { type: "NUMBER", description: "공급면적 평수 숫자값 (평, 예: 34)" },
                         buildingAge: { type: "NUMBER", description: "경과연수 숫자값 (년차, 예: 12)" },
@@ -1765,7 +1813,7 @@
                         marketPrice: { type: "NUMBER", description: "현재 매매 호가 또는 최근 실거래가 숫자값 (억원, 예: 15.5)" },
                         sizeType: { type: "STRING", description: "대표 평형 규격 텍스트 명칭 (예: '34평 A타입')" }
                     },
-                    required: ["landArea", "supplySize", "buildingAge", "households", "villaLandPrice", "marketPrice", "sizeType"]
+                    required: ["region", "district", "landArea", "supplySize", "buildingAge", "households", "villaLandPrice", "marketPrice", "sizeType"]
                 }
             };
 
@@ -1778,9 +1826,10 @@
                 }
 
                 const data = JSON.parse(rawJsonText);
-                writeDebugLog(`[AI 자동완성 수신 데이터]: ${rawJsonText}`);
+                writeDebugLog(`[AI 자연어 검색 결과 수신]: ${rawJsonText}`);
 
-                // Bind response data safely to slider bounds
+                // Bind response data safely to slider bounds and inputs
+                elAptName.value = data.sizeType ? `${aptQuery}` : aptQuery; 
                 elSizeType.value = data.sizeType || "34평형 규격";
                 
                 slideLandArea.value = Math.max(1, Math.min(50, data.landArea || 15));
@@ -1790,16 +1839,39 @@
                 slideHouseholds.value = Math.max(10, Math.min(10000, data.households || 1000));
                 slideMarketPrice.value = Math.max(1, Math.min(100, data.marketPrice || 10));
 
+                // 🔄 스마트 행정구역 매핑 동적 바인딩
+                if (districtMap[data.region]) {
+                    elRegion.value = data.region;
+                    populateDistrictOptions();
+                    
+                    const targetDistrict = data.district;
+                    const options = Array.from(elDistrict.options).map(o => o.value);
+                    
+                    // Try exact match first
+                    let matchedDistrict = options.find(opt => opt === targetDistrict);
+                    if (!matchedDistrict) {
+                        // Try substring fuzzy fallback (resolves "마포구" into "마포구 (아현)")
+                        matchedDistrict = options.find(opt => opt.includes(targetDistrict) || targetDistrict.includes(opt.split(" ")[0]));
+                    }
+                    
+                    if (matchedDistrict) {
+                        elDistrict.value = matchedDistrict;
+                        writeDebugLog(`[매핑 완수] 행정구역이 "${data.region} ${matchedDistrict}"으로 자동 설정되었습니다.`);
+                    } else {
+                        elDistrict.selectedIndex = 0;
+                        writeDebugLog(`[매핑 보정] 상세 지역 매핑이 모호하여 기본값 "${options[0]}"으로 대체되었습니다.`);
+                    }
+                }
+
                 // Recalculate and update views
                 runRealTimeAnalysis();
                 
-                showToast(`[${aptName}]의 실제 스펙 데이터를 성공적으로 취합하여 자동 완성했습니다!`, "success");
-                writeDebugLog(`[AI 자동완성] ${aptName} 데이터 매핑 성공 (세대수: ${data.households}세대, 연식: ${data.buildingAge}년, 지분: ${data.landArea}평)`);
+                showToast(`[${aptQuery}]의 실제 등기부 스펙을 완벽하게 동기화했습니다!`, "success");
 
             } catch (err) {
                 console.error(err);
                 showToast(err.message || "실시간 정보 수집 도중 오류가 발생했습니다.", "error");
-                writeDebugLog(`[AI 자동완성 오류]: ${err.message}`, true);
+                writeDebugLog(`[AI 자동완성 에러]: ${err.message}`, true);
             } finally {
                 btnAIAutofill.disabled = false;
                 btnAIAutofillText.textContent = "✨ AI 단지 정보 원클릭 자동 완성";
