@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>서울·경기·인천 아파트 가치 고찰 시뮬레이터 v7.5</title>
+    <title>서울·경기·인천 아파트 가치 고찰 시뮬레이터 v7.8</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -67,7 +67,7 @@
                 <h1 class="text-xl md:text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-sky-400 to-emerald-400">
                     서울·경기·인천 아파트 가치 시뮬레이터
                 </h1>
-                <p class="text-xs text-slate-400 mt-0.5">Gemini AI 입지 진단 센터 & 무손실 감사 로그 복원 시스템 v7.5</p>
+                <p class="text-xs text-slate-400 mt-0.5">Gemini AI 입지 진단 센터 & 무손실 감사 로그 복원 시스템 v7.8</p>
             </div>
         </div>
         
@@ -79,6 +79,23 @@
                     <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                 </span>
                 <span id="db-status-text">서버 연결 상태 점검 중...</span>
+            </div>
+
+            <!-- Google Authentication Area -->
+            <div id="google-auth-container" class="flex items-center gap-2">
+                <button id="btn-google-login" class="text-xs font-extrabold bg-white hover:bg-slate-100 text-slate-900 px-3.5 py-2 rounded-lg border border-slate-200 transition duration-200 flex items-center gap-2 active:scale-95 shadow-md">
+                    <i class="fa-brands fa-google text-red-500"></i> 구글 로그인 (AI 활성화)
+                </button>
+                <div id="user-profile-box" class="hidden flex items-center gap-2.5 bg-slate-950/60 border border-slate-800 rounded-lg p-1.5 pr-3">
+                    <img id="user-avatar" src="" alt="Profile" class="w-7 h-7 rounded-full border border-slate-700">
+                    <div class="text-left hidden sm:block">
+                        <span id="user-name" class="text-[11px] font-bold text-slate-200 block max-w-[80px] truncate">사용자</span>
+                        <span class="text-[8px] text-emerald-400 block font-semibold">✨ AI 엔진 잠금해제</span>
+                    </div>
+                    <button id="btn-google-logout" class="text-xs text-slate-500 hover:text-rose-400 transition ml-2 p-1" title="로그아웃">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
             </div>
 
             <!-- Audit Log History Button -->
@@ -568,7 +585,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAuth, signInAnonymously, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
         // 사용자 제공 파이어베이스 설정 정보 완전 연동
         const firebaseConfig = {
@@ -587,6 +604,7 @@
         let apartmentsCollection = null;
         let logsCollection = null;
         let useFirebase = false;
+        const googleProvider = new GoogleAuthProvider();
 
         // Dynamic 2-Tier Cascading Location Mappings with specific sub-regions bundled in parentheses
         const districtMap = {
@@ -728,6 +746,13 @@
         // ✨ Gemini AI Autofill Elements
         const btnAIAutofill = document.getElementById("btn-ai-autofill");
         const btnAIAutofillText = document.getElementById("btn-ai-autofill-text");
+
+        // Google Authentication Elements
+        const btnGoogleLogin = document.getElementById("btn-google-login");
+        const userProfileBox = document.getElementById("user-profile-box");
+        const userAvatar = document.getElementById("user-avatar");
+        const userName = document.getElementById("user-name");
+        const btnGoogleLogout = document.getElementById("btn-google-logout");
 
         // 📡 Custom Toast Notifications
         function showToast(message, type = "info") {
@@ -963,13 +988,40 @@
                 apartmentsCollection = collection(db, "artifacts", "apt-real-price", "public", "data", "apartments");
                 logsCollection = collection(db, "artifacts", "apt-real-price", "public", "data", "logs");
 
-                writeDebugLog("익명 로그인 요청 인증 중 (Rule 3)...");
-                await signInAnonymously(auth);
-                writeDebugLog(`익명 인증 완료. UserID: ${auth.currentUser.uid}`);
+                // Authentication Listener to seamlessly handle anonymous and 구글 로그인 (Rule 3)
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        writeDebugLog(`사용자 변경 감지됨. UID: ${user.uid}`);
+                        
+                        if (user.isAnonymous) {
+                            // Anonymous user logged in
+                            btnGoogleLogin.classList.remove("hidden");
+                            userProfileBox.classList.add("hidden");
+                            badge.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400";
+                            badgeText.textContent = "실시간 서버 연동 모드 (익명)";
+                        } else {
+                            // Google user logged in
+                            btnGoogleLogin.classList.add("hidden");
+                            userProfileBox.classList.remove("hidden");
+                            userAvatar.src = user.photoURL || "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/user.svg";
+                            userName.textContent = user.displayName || "구글 유저";
+                            
+                            // Automatically autofill nickname with Google Name for premium feel
+                            if (!elAuthor.value.trim() || elAuthor.value === "무명씨") {
+                                elAuthor.value = user.displayName || "";
+                            }
+                            
+                            badge.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400";
+                            badgeText.textContent = "실시간 서버 연동 모드 (Google)";
+                        }
+                    } else {
+                        // Not logged in at all, trigger anonymous login to secure database sync (Rule 3)
+                        writeDebugLog("구글/익명 권한 유실. 익명 세션 재획득 중...");
+                        await signInAnonymously(auth);
+                    }
+                });
 
                 useFirebase = true;
-                badge.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400";
-                badgeText.textContent = "실시간 서버 연동 모드 (Firestore)";
 
                 // Real-time Firestore Database listeners (No complex queries - Rule 2)
                 onSnapshot(apartmentsCollection, (snapshot) => {
@@ -1008,11 +1060,52 @@
                 useFirebase = false;
                 badge.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 border border-amber-500/30 text-amber-400";
                 badgeText.textContent = "로컬 단독 가동 모드";
+                btnGoogleLogin.classList.add("hidden");
                 
                 loadLocalStorageFallback();
             }
 
             runRealTimeAnalysis();
+        }
+
+        // 구글 로그인 트리거 함수
+        async function handleGoogleLogin() {
+            try {
+                writeDebugLog("구글 인증 창 활성화 중...");
+                const result = await signInWithPopup(auth, googleProvider);
+                showToast(`${result.user.displayName}님 로그인에 성공했습니다. AI 잠금이 해제되었습니다!`, "success");
+            } catch (e) {
+                console.error("구글 로그인 에러:", e);
+                writeDebugLog(`구글 로그인 실패: ${e.message}`, true);
+                showToast("구글 로그인 팝업이 거부되었거나 실패했습니다.", "error");
+            }
+        }
+
+        // 구글 로그아웃 (익명 로그인으로 복귀)
+        async function handleGoogleLogout() {
+            const proc = await showCustomConfirm("구글 로그아웃", "구글 계정을 로그아웃하시겠습니까? 데이터 확인은 익명 계정으로 계속 가능하나 AI 기능은 다시 잠금 처리됩니다.");
+            if (!proc) return;
+
+            try {
+                writeDebugLog("구글 로그아웃 실행 중...");
+                await signOut(auth);
+                showToast("로그아웃되었습니다. AI 권한이 환수되었습니다.", "info");
+            } catch (e) {
+                console.error("로그아웃 에러:", e);
+                showToast("로그아웃 과정에서 예외 에러가 발생했습니다.", "error");
+            }
+        }
+
+        // Google Authentication DOM Event Binding
+        btnGoogleLogin.addEventListener("click", handleGoogleLogin);
+        btnGoogleLogout.addEventListener("click", handleGoogleLogout);
+
+        // 구글 로그인 인증 여부 판독 도우미 함수 (AI 가드 역할)
+        function checkGoogleAuthRequired() {
+            if (!auth || !auth.currentUser || auth.currentUser.isAnonymous) {
+                return false; // 구글 실계정 인증이 되어있지 않음
+            }
+            return true;
         }
 
         function loadLocalStorageFallback() {
@@ -1422,6 +1515,7 @@
                 .replace(/^## (.*$)/gim, '<h4 class="text-base font-extrabold text-indigo-300 mt-5 mb-3 border-b border-slate-800 pb-1 flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-[10px] text-indigo-400"></i> $1</h4>')
                 .replace(/^# (.*$)/gim, '<h3 class="text-lg font-black text-white mt-6 mb-4">$1</h3>')
                 // Bold text
+                .replace(/\*\*(.*?)\*\"/g, '<strong class="text-white font-bold">$1</strong>')
                 .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
                 // Bullet list elements
                 .replace(/^\s*[\-\*]\s*(.*$)/gim, '<li class="ml-4 list-disc text-slate-300 my-1">$1</li>')
@@ -1469,6 +1563,16 @@
 
         // Trigger AI Diagnosis Report Generation
         btnGenerateAI.addEventListener("click", async () => {
+            // [구글 로그인 가드라인 작동]
+            if (!checkGoogleAuthRequired()) {
+                const proceed = await showCustomConfirm(
+                    "🔐 구글 로그인 권한 필요", 
+                    "실시간 종합 AI 리포트 생성 및 분석 서비스는 무임승차 매크로 봇 방지를 위해 구글 로그인이 요구됩니다. 구글 계정으로 즉시 로그인해 볼까요?"
+                );
+                if (proceed) handleGoogleLogin();
+                return;
+            }
+
             const region = elRegion.value;
             const district = elDistrict.value;
             const aptName = elAptName.value.trim();
@@ -1599,6 +1703,16 @@
 
         // ----------------- ✨ Gemini AI Autofill Functionality -----------------
         btnAIAutofill.addEventListener("click", async () => {
+            // [구글 로그인 가드라인 작동]
+            if (!checkGoogleAuthRequired()) {
+                const proceed = await showCustomConfirm(
+                    "🔐 구글 로그인 권한 필요", 
+                    "실시간 AI 단지 정보 자동 완성은 무차별 매크로 봇 방지를 위해 구글 계정 인증이 요구됩니다. 구글 로그인 화면으로 가보시겠습니까?"
+                );
+                if (proceed) handleGoogleLogin();
+                return;
+            }
+
             const region = elRegion.value;
             const district = elDistrict.value;
             const aptName = elAptName.value.trim();
@@ -1638,7 +1752,7 @@
             // Structured JSON Schema for reliable Autofill
             const customConfig = {
                 responseMimeType: "application/json",
-                responseSchema: {
+                responseSchema = {
                     type: "OBJECT",
                     properties: {
                         landArea: { type: "NUMBER", description: "평균 대지지분 숫자값 (평, 예: 12.5)" },
