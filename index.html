@@ -149,6 +149,11 @@
                     </div>
                 </div>
 
+                <!-- ✨ AI Autofill Trigger Button -->
+                <button id="btn-ai-autofill" class="w-full bg-slate-900/90 hover:bg-slate-850 text-indigo-400 hover:text-indigo-300 py-3 rounded-xl font-bold text-xs border border-indigo-500/20 hover:border-indigo-500/40 transition duration-200 flex items-center justify-center gap-2 active:scale-[0.98]">
+                    <i class="fa-solid fa-wand-magic-sparkles text-indigo-400"></i> <span id="btn-ai-autofill-text">✨ AI 단지 정보 원클릭 자동 완성</span>
+                </button>
+
                 <div class="border-t border-slate-800/60 my-2"></div>
 
                 <!-- Sliders -->
@@ -719,6 +724,10 @@
         const elAICitationsArea = document.getElementById("ai-citations-area");
         const elAICitationsList = document.getElementById("ai-citations-list");
         const btnCopyAI = document.getElementById("btn-copy-ai");
+
+        // ✨ Gemini AI Autofill Elements
+        const btnAIAutofill = document.getElementById("btn-ai-autofill");
+        const btnAIAutofillText = document.getElementById("btn-ai-autofill-text");
 
         // 📡 Custom Toast Notifications
         function showToast(message, type = "info") {
@@ -1425,7 +1434,7 @@
         }
 
         // Fetch using Exponential Backoff (Up to 5 Retries)
-        async function fetchGeminiWithBackoff(prompt, systemPrompt) {
+        async function fetchGeminiWithBackoff(prompt, systemPrompt, customConfig = null) {
             const apiKey = ""; // Left empty to be dynamically bound by environment
             const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
             const payload = {
@@ -1433,6 +1442,10 @@
                 systemInstruction: { parts: [{ text: systemPrompt }] },
                 tools: [{ "google_search": {} }] // Enable Google Search grounding dynamically
             };
+
+            if (customConfig) {
+                payload.generationConfig = customConfig;
+            }
 
             let delay = 1000;
             for (let attempt = 1; attempt <= 5; attempt++) {
@@ -1582,6 +1595,99 @@
                 showToast("복사 작업을 수행할 권한이 유실되었습니다.", "error");
             }
             document.body.removeChild(textarea);
+        });
+
+        // ----------------- ✨ Gemini AI Autofill Functionality -----------------
+        btnAIAutofill.addEventListener("click", async () => {
+            const region = elRegion.value;
+            const district = elDistrict.value;
+            const aptName = elAptName.value.trim();
+
+            if (!aptName) {
+                showToast("자동 완성을 위해 먼저 아파트 단지명을 조절기에 기입해 주세요.", "error");
+                elAptName.focus();
+                return;
+            }
+
+            btnAIAutofill.disabled = true;
+            btnAIAutofillText.textContent = "Gemini AI가 인터넷에서 실시간 검색 중...";
+            showToast(`구글 실시간 검색을 통해 [${region} ${district} ${aptName}] 정보를 탐색합니다.`, "info");
+            writeDebugLog(`[AI 자동완성] ${region} ${district} ${aptName} 세부 데이터 탐색 시동`);
+
+            const prompt = `
+            구글 검색(Google Grounding)을 통해 다음 아파트의 최신 부동산 상세 스펙을 정밀히 조사해줘:
+            - 행정 구역: ${region} ${district}
+            - 아파트 단지명: ${aptName}
+
+            조사할 주요 자산 스펙:
+            1. 평균 대지지분 (단위: 평)
+            2. 대표 공급평형 (단위: 평, 예: 34평, 24평 등 실제 대표 평형)
+            3. 준공년도 기준 현재 경과연수 (단위: 년차, 2026년 기준 계산)
+            4. 총 세대수 (단위: 세대)
+            5. 인근 빌라 평당 대지지분 가격 수준 (단위: 만원, 서울 최상급지 8000~13000, 마포/용산/성동 5000~8000, 외곽 및 경기/인천 2000~4500 범위에서 현실적인 가치 수렴)
+            6. 현재 대표 공급평형의 네이버 시세 또는 최근 실거래가 평균 수준 (단위: 억, 소수점 첫째자리까지 표시)
+            7. 평형 규격 명칭 (예: "34평형", "전용 84㎡")
+            `;
+
+            const systemPrompt = `
+            너는 대한민국의 유능한 감정평가사 겸 AI 부동산 분석가이다.
+            사용자가 제시한 특정 아파트에 대해 실시간 구글 검색(Grounding)을 엄격히 동원하여 사실에 입각한 실제 정보를 취합한 뒤, 반드시 아래 명시된 JSON 규격과 부합하는 구조화된 오브젝트로만 반환하라.
+            다른 수사구나 부가 설명 없이, 마크다운 백틱 문장 기호(예: \`\`\`json) 조차 생략하고 오로지 하나의 JSON String만 직접 출력해야 한다.
+            `;
+
+            // Structured JSON Schema for reliable Autofill
+            const customConfig = {
+                responseMimeType: "application/json",
+                responseSchema: {
+                    type: "OBJECT",
+                    properties: {
+                        landArea: { type: "NUMBER", description: "평균 대지지분 숫자값 (평, 예: 12.5)" },
+                        supplySize: { type: "NUMBER", description: "공급면적 평수 숫자값 (평, 예: 34)" },
+                        buildingAge: { type: "NUMBER", description: "경과연수 숫자값 (년차, 예: 12)" },
+                        households: { type: "NUMBER", description: "총 세대수 숫자값 (세대, 예: 2400)" },
+                        villaLandPrice: { type: "NUMBER", description: "인근 빌라 평당 대지지분 가격 숫자값 (만원, 예: 4500)" },
+                        marketPrice: { type: "NUMBER", description: "현재 매매 호가 또는 최근 실거래가 숫자값 (억원, 예: 15.5)" },
+                        sizeType: { type: "STRING", description: "대표 평형 규격 텍스트 명칭 (예: '34평 A타입')" }
+                    },
+                    required: ["landArea", "supplySize", "buildingAge", "households", "villaLandPrice", "marketPrice", "sizeType"]
+                }
+            };
+
+            try {
+                const result = await fetchGeminiWithBackoff(prompt, systemPrompt, customConfig);
+                const rawJsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (!rawJsonText) {
+                    throw new Error("정보를 찾을 수 없거나 데이터 수집이 지연되고 있습니다.");
+                }
+
+                const data = JSON.parse(rawJsonText);
+                writeDebugLog(`[AI 자동완성 수신 데이터]: ${rawJsonText}`);
+
+                // Bind response data safely to slider bounds
+                elSizeType.value = data.sizeType || "34평형 규격";
+                
+                slideLandArea.value = Math.max(1, Math.min(50, data.landArea || 15));
+                slideSupplySize.value = Math.max(10, Math.min(100, data.supplySize || 34));
+                slideBuildingAge.value = Math.max(0, Math.min(60, data.buildingAge || 25));
+                slideVillaPrice.value = Math.max(1000, Math.min(15000, data.villaLandPrice || 3500));
+                slideHouseholds.value = Math.max(10, Math.min(10000, data.households || 1000));
+                slideMarketPrice.value = Math.max(1, Math.min(100, data.marketPrice || 10));
+
+                // Recalculate and update views
+                runRealTimeAnalysis();
+                
+                showToast(`[${aptName}]의 실제 스펙 데이터를 성공적으로 취합하여 자동 완성했습니다!`, "success");
+                writeDebugLog(`[AI 자동완성] ${aptName} 데이터 매핑 성공 (세대수: ${data.households}세대, 연식: ${data.buildingAge}년, 지분: ${data.landArea}평)`);
+
+            } catch (err) {
+                console.error(err);
+                showToast(err.message || "실시간 정보 수집 도중 오류가 발생했습니다.", "error");
+                writeDebugLog(`[AI 자동완성 오류]: ${err.message}`, true);
+            } finally {
+                btnAIAutofill.disabled = false;
+                btnAIAutofillText.textContent = "✨ AI 단지 정보 원클릭 자동 완성";
+            }
         });
 
         // Search bar listener
