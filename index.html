@@ -226,7 +226,7 @@
                             </div>
                         </div>
                         <input type="range" id="slide-building-age" min="0" max="60" step="1" value="25" 
-                            class="w-full accent-rose-500 bg-slate-950 h-1.5 rounded-lg appearance-none cursor-pointer">
+                            class="w-full accent-rose-500 bg-slate-955 h-1.5 rounded-lg appearance-none cursor-pointer">
                     </div>
 
                     <!-- Villa Land Price -->
@@ -814,6 +814,7 @@
         // 📡 Debug Terminal logger
         function writeDebugLog(message, isError = false) {
             const container = document.getElementById("debug-log-list");
+            if (!container) return;
             const node = document.createElement("div");
             const now = new Date().toLocaleTimeString();
             node.className = `flex gap-2 leading-relaxed ${isError ? 'text-rose-400' : 'text-slate-400'}`;
@@ -1516,6 +1517,7 @@
                 .replace(/^# (.*$)/gim, '<h3 class="text-lg font-black text-white mt-6 mb-4">$1</h3>')
                 // Bold text
                 .replace(/\*\*(.*?)\*\"/g, '<strong class="text-white font-bold">$1</strong>')
+                .replace(/\*\*(.*?)\*\"/g, '<strong class="text-white font-bold">$1</strong>')
                 .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
                 // Bullet list elements
                 .replace(/^\s*[\-\*]\s*(.*$)/gim, '<li class="ml-4 list-disc text-slate-300 my-1">$1</li>')
@@ -1749,10 +1751,10 @@
             다른 수사구나 부가 설명 없이, 마크다운 백틱 문장 기호(예: \`\`\`json) 조차 생략하고 오로지 하나의 JSON String만 직접 출력해야 한다.
             `;
 
-            // Structured JSON Schema for reliable Autofill
+            // Structured JSON Schema for reliable Autofill (Syntax Corrected from '=' to ':')
             const customConfig = {
                 responseMimeType: "application/json",
-                responseSchema = {
+                responseSchema: {
                     type: "OBJECT",
                     properties: {
                         landArea: { type: "NUMBER", description: "평균 대지지분 숫자값 (평, 예: 12.5)" },
