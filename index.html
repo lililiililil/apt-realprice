@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>서울·경기·인천 아파트 가치 고찰 시뮬레이터 v7.0</title>
+    <title>서울·경기·인천 아파트 가치 고찰 시뮬레이터 v7.5</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -67,7 +67,7 @@
                 <h1 class="text-xl md:text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-sky-400 to-emerald-400">
                     서울·경기·인천 아파트 가치 시뮬레이터
                 </h1>
-                <p class="text-xs text-slate-400 mt-0.5">정형화 지역 매칭 & 무손실 감사 로그 복원 시스템 v7.0</p>
+                <p class="text-xs text-slate-400 mt-0.5">Gemini AI 입지 진단 센터 & 무손실 감사 로그 복원 시스템 v7.5</p>
             </div>
         </div>
         
@@ -341,8 +341,67 @@
                             <span id="ledger-premium-mul" class="font-bold text-slate-200 font-mono">1.00 배</span>
                         </div>
                         <div class="col-span-1 md:col-span-2 flex justify-between items-center py-2 text-sm border-t border-slate-800/80 mt-1">
-                            <span class="font-bold text-slate-300">최종 모델 기준가 (① + ③) × ④</span>
+                            <span class="font-bold text-slate-300">최종 모델 기본가 (① + ③) × ④</span>
                             <span id="ledger-model-total" class="font-black text-emerald-400 font-mono">0.0 억원</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ✨ Gemini AI Diagnostic Card -->
+            <div class="p-6 rounded-2xl glass-panel shadow-2xl relative border border-slate-800/60 overflow-hidden">
+                <div class="absolute -left-12 -bottom-12 w-48 h-48 bg-indigo-500/5 rounded-full blur-3xl"></div>
+                
+                <div class="border-b border-slate-800/80 pb-3 flex justify-between items-center mb-4">
+                    <h2 class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400 flex items-center gap-2 select-none">
+                        <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> ✨ Gemini AI 종합 진단 센터
+                    </h2>
+                </div>
+                
+                <p class="text-xs text-slate-400 leading-relaxed mb-4">
+                    현재 시뮬레이터에 세팅된 개별 아파트 스펙 및 시장 격차($\alpha$) 분석 데이터와 실시간 구글 검색(Google Grounding)을 결합하여, 최고급 입지·투자 진단 리포트를 생성합니다.
+                </p>
+
+                <div class="flex flex-col gap-4">
+                    <!-- Fetch Action -->
+                    <button id="btn-generate-ai" class="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-600 hover:from-purple-500 hover:via-indigo-500 hover:to-emerald-500 text-white py-3 rounded-xl font-extrabold text-xs tracking-wider transition duration-300 shadow-lg shadow-purple-600/20 active:scale-95 flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i> <span>✨ AI 종합 입지·전망 리포트 생성</span>
+                    </button>
+
+                    <!-- Loading State -->
+                    <div id="ai-loading" class="hidden flex flex-col items-center justify-center py-8 gap-4 bg-slate-950/40 border border-slate-850 rounded-xl">
+                        <div class="relative flex items-center justify-center">
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
+                            <i class="fa-solid fa-wand-magic-sparkles text-purple-400 absolute text-sm animate-ping"></i>
+                        </div>
+                        <div class="text-center">
+                            <span id="ai-loading-status" class="text-xs font-bold text-indigo-300 animate-pulse">실시간 시장 정보 검색 중...</span>
+                            <p class="text-[10px] text-slate-500 mt-1">약 5~10초의 자산 해석 및 입지 연산 시간이 소요됩니다.</p>
+                        </div>
+                    </div>
+
+                    <!-- AI Report Output Area -->
+                    <div id="ai-report-area" class="hidden flex flex-col gap-4 bg-slate-950/80 p-5 rounded-xl border border-slate-850 max-h-[500px] overflow-y-auto">
+                        <div class="flex justify-between items-center border-b border-slate-850 pb-2">
+                            <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5 select-none">
+                                <i class="fa-solid fa-file-invoice-dollar animate-pulse"></i> Gemini AI 자산 종합 분석서
+                            </span>
+                            <button id="btn-copy-ai" class="text-[10px] bg-slate-900 hover:bg-slate-800 text-slate-300 px-2.5 py-1 rounded border border-slate-800 transition flex items-center gap-1">
+                                <i class="fa-solid fa-copy"></i> 복사하기
+                            </button>
+                        </div>
+                        
+                        <!-- Formatted Report Output -->
+                        <div id="ai-report-output" class="text-xs text-slate-300 leading-relaxed flex flex-col gap-2">
+                            <!-- Filled dynamically -->
+                        </div>
+
+                        <!-- Grounding Citations -->
+                        <div id="ai-citations-area" class="hidden flex flex-col gap-2 border-t border-slate-850 pt-3 mt-2">
+                            <span class="text-[10px] font-bold text-slate-500"><i class="fa-solid fa-globe"></i> 최신 시장 교차 검증 출처 (Google Grounding)</span>
+                            <div id="ai-citations-list" class="flex flex-wrap gap-2">
+                                <!-- Injected dynamically -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -577,6 +636,7 @@
         let currentEditingId = null;
         let currentSortKey = "alphaPercent";
         let currentSortOrder = "desc";
+        let currentCalculation = null; // AI 연동을 위해 실시간 연산 기록 캐싱
 
         // DOM Elements
         const elRegion = document.getElementById("select-region");
@@ -649,6 +709,16 @@
         const btnShowHistory = document.getElementById("btn-show-history");
         const btnCloseHistory = document.getElementById("btn-close-history");
         const historyLogsContainer = document.getElementById("history-logs-container");
+
+        // ✨ Gemini AI Dynamic Elements
+        const btnGenerateAI = document.getElementById("btn-generate-ai");
+        const elAILoading = document.getElementById("ai-loading");
+        const elAILoadingStatus = document.getElementById("ai-loading-status");
+        const elAIReportArea = document.getElementById("ai-report-area");
+        const elAIReportOutput = document.getElementById("ai-report-output");
+        const elAICitationsArea = document.getElementById("ai-citations-area");
+        const elAICitationsList = document.getElementById("ai-citations-list");
+        const btnCopyAI = document.getElementById("btn-copy-ai");
 
         // 📡 Custom Toast Notifications
         function showToast(message, type = "info") {
@@ -788,6 +858,7 @@
             txtHouseholds.textContent = `${households.toLocaleString()} 세대`;
 
             const calc = calculateValuation(landArea, supplySize, constPrice, age, villaPrice, households, marketPrice);
+            currentCalculation = calc; // 전역 스냅샷 캐싱
 
             txtPremiumMultiplier.textContent = `(대단지 가중치: ${calc.premiumMul.toFixed(2)}배)`;
             txtMarketPrice.textContent = `${marketPrice.toFixed(1)} 억원`;
@@ -1328,6 +1399,192 @@
             if (e.target === modalHistory) modalHistory.classList.add("hidden");
         });
 
+        // ----------------- ✨ Gemini API Integration & AI Reports -----------------
+        
+        // Simple Markdown parsing replacement engine inside single-file iFrame limits
+        function parseMarkdownToHtml(md) {
+            if (!md) return "";
+            let html = md
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                // Headers
+                .replace(/^### (.*$)/gim, '<h5 class="text-sm font-bold text-sky-400 mt-4 mb-2">$1</h5>')
+                .replace(/^## (.*$)/gim, '<h4 class="text-base font-extrabold text-indigo-300 mt-5 mb-3 border-b border-slate-800 pb-1 flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-[10px] text-indigo-400"></i> $1</h4>')
+                .replace(/^# (.*$)/gim, '<h3 class="text-lg font-black text-white mt-6 mb-4">$1</h3>')
+                // Bold text
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
+                // Bullet list elements
+                .replace(/^\s*[\-\*]\s*(.*$)/gim, '<li class="ml-4 list-disc text-slate-300 my-1">$1</li>')
+                // Paragraph processing (double newlines)
+                .split('\n\n').map(p => {
+                    if (p.trim().startsWith('<h') || p.trim().startsWith('<li')) return p;
+                    return `<p class="my-2.5 text-slate-300 leading-relaxed">${p}</p>`;
+                }).join('\n');
+            return html;
+        }
+
+        // Fetch using Exponential Backoff (Up to 5 Retries)
+        async function fetchGeminiWithBackoff(prompt, systemPrompt) {
+            const apiKey = ""; // Left empty to be dynamically bound by environment
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                tools: [{ "google_search": {} }] // Enable Google Search grounding dynamically
+            };
+
+            let delay = 1000;
+            for (let attempt = 1; attempt <= 5; attempt++) {
+                try {
+                    const response = await fetch(url, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) {
+                        return await response.json();
+                    }
+                } catch (err) {
+                    // Fail silently and defer to retry logic without polluting console
+                }
+                await new Promise(resolve => setTimeout(resolve, delay));
+                delay *= 2;
+            }
+            throw new Error("서버 및 인프라 연동 상태가 혼잡합니다. 잠시 후 보고서 생성을 다시 작동해 주세요.");
+        }
+
+        // Trigger AI Diagnosis Report Generation
+        btnGenerateAI.addEventListener("click", async () => {
+            const region = elRegion.value;
+            const district = elDistrict.value;
+            const aptName = elAptName.value.trim();
+            const sizeType = elSizeType.value.trim() || "34평형 규격";
+
+            if (!aptName) {
+                showToast("AI 진단을 시작하기 위해 먼저 단지명을 바르게 입력해 주세요.", "error");
+                elAptName.focus();
+                return;
+            }
+
+            const calc = currentCalculation;
+            if (!calc) {
+                showToast("시뮬레이터 가치 연산에 오류가 발견되었습니다.", "error");
+                return;
+            }
+
+            // Hide old outputs & show loaders with dynamic captions
+            elAIReportArea.classList.add("hidden");
+            elAILoading.classList.remove("hidden");
+            btnGenerateAI.disabled = true;
+
+            const loadingCaptions = [
+                "🔍 인근 지역 실시간 개발 호재 및 시세 탐색 중...",
+                "📊 감정평가 이론 내재가치와 괴리 요인(알파) 해석 중...",
+                "🔮 거시경제 요인을 감안한 향후 5개년 투자 타당성 연산 중...",
+                "✍️ 최고급 가치 진단 리포트 활자 인쇄 중..."
+            ];
+            
+            let captionIndex = 0;
+            elAILoadingStatus.textContent = loadingCaptions[0];
+            const captionInterval = setInterval(() => {
+                captionIndex = (captionIndex + 1) % loadingCaptions.length;
+                elAILoadingStatus.textContent = loadingCaptions[captionIndex];
+            }, 2200);
+
+            // Construct Gemini dynamic prompt variables
+            const prompt = `
+            분석 아파트 주요 스펙:
+            - 행정 구역: ${region} ${district}
+            - 단지 명칭: ${aptName} (${sizeType})
+            - 보유 대지지분: ${slideLandArea.value} 평 (인근 빌라 대지 평당 기준가: ${slideVillaPrice.value} 만원)
+            - 계약면적 환산 공급 규모: ${slideSupplySize.value} 평 (계약 면적: ${(parseFloat(slideSupplySize.value) * 1.4).toFixed(1)} 평)
+            - 평당 계약 건축비: ${slideConstPrice.value} 만원
+            - 단지 세대수 규모: ${slideHouseholds.value} 세대 (Pm 세대수 가중치: ${calc.premiumMul.toFixed(2)}배)
+            - 경과연수 (연식): ${slideBuildingAge.value} 년 (건물 물리 상각 잔존율: ${calc.ageFactor.toFixed(2)}배)
+
+            시뮬레이터 연산 데이터:
+            - 수학적 이론 내재가치: ${calc.modelVal.toFixed(2)} 억 원
+            - 현재 시장 매매 호가: ${calc.alpha >= 0 ? '과열' : '안전마진'} 조절가 ${parseFloat(slideMarketPrice.value).toFixed(2)} 억 원
+            - 시장 가격 편차(알파, 거품 격차): ${calc.alpha.toFixed(2)} 억 원 (편차 비율: ${calc.alphaPercent.toFixed(1)}%)
+            - 시뮬레이터 판정: ${outAlphaStatus.textContent}
+
+            실시간 구글 검색(Google Grounding) 최신 정보를 바탕으로 아래 항목들을 신뢰도 높게 고찰하여 마크다운 리포트로 출력해 줘:
+            1. [입지 및 정주 인프라 정밀 진단] (교통 접근성, 학군 메리트, 주요 직주근접 및 호재 결합)
+            2. [수학적 내재가치와 시장가의 괴리 원인 분석] (우리가 산정한 이론 가치와 시장 호가 사이의 알파가 단순 거품인지, 아니면 미래 가치(재건축 가능성, 독보적 프리미엄)를 선반영한 무형의 자산 가치인지 논평)
+            3. [향후 5개년 투자 매력도 및 추천 등급] (보수적 금리 여건을 감안한 투자 가치 및 1~10점 척도의 가치 보존성 점수 제시)
+            `;
+
+            const systemPrompt = `
+            너는 대한민국 최고의 권위를 자랑하는 서울, 경기, 인천 권역 전용 부동산 수석 입지분석가이자 감정평가 전문가 'Gemini AI'이다.
+            사용자가 제시한 아파트의 물리적 가치(대지지분, 건물원가, 세대수 로그 버프 Pm)와 시장 호가의 괴리율 알파(α)를 현실 시장 흐름과 예리하게 교차 매칭하여 전문가 등급의 보고서를 기필코 작성해야 한다.
+            구글 서치 연동(Grounding)을 전적으로 사용하여 실제 해당 단지 인근의 최근 호재와 실거래 분위기를 반영해 사실에 기초하여 분석해라. 보고서는 고급스럽고 설득력 있는 정형화된 한국어로 작성하라.
+            `;
+
+            try {
+                const result = await fetchGeminiWithBackoff(prompt, systemPrompt);
+                clearInterval(captionInterval);
+
+                const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!responseText) {
+                    throw new Error("서버로부터 데이터가 수신되었으나 보고서 본문이 누락되었습니다.");
+                }
+
+                // Render Report output beautifully
+                elAIReportOutput.innerHTML = parseMarkdownToHtml(responseText);
+
+                // Render Grounding citations attributions (Google Grounding)
+                const attributions = result.candidates?.[0]?.groundingMetadata?.groundingAttributions;
+                if (attributions && attributions.length > 0) {
+                    elAICitationsArea.classList.remove("hidden");
+                    elAICitationsList.innerHTML = attributions.map(attr => {
+                        const title = attr.web?.title || attr.web?.uri || "출처 참조";
+                        const uri = attr.web?.uri || "#";
+                        return `
+                            <a href="${uri}" target="_blank" rel="noopener noreferrer" class="bg-slate-900 hover:bg-indigo-950/40 border border-slate-800 hover:border-indigo-500/40 text-slate-400 hover:text-indigo-300 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition flex items-center gap-1.5 max-w-[200px] truncate select-none">
+                                <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
+                                <span class="truncate">${title}</span>
+                            </a>
+                        `;
+                    }).join("");
+                } else {
+                    elAICitationsArea.classList.add("hidden");
+                }
+
+                elAIReportArea.classList.remove("hidden");
+                showToast(`[${aptName}] 입지 및 투자 타당성 보고서가 무사히 출간되었습니다!`, "success");
+
+            } catch (error) {
+                console.error(error);
+                clearInterval(captionInterval);
+                showToast(error.message, "error");
+            } finally {
+                elAILoading.classList.add("hidden");
+                btnGenerateAI.disabled = false;
+            }
+        });
+
+        // Safe temporary elements copying mechanism for Web IFrame restrictions
+        btnCopyAI.addEventListener("click", () => {
+            const textToCopy = elAIReportOutput.innerText;
+            if (!textToCopy) return;
+
+            const textarea = document.createElement("textarea");
+            textarea.value = textToCopy;
+            textarea.style.position = "fixed"; // Keep fixed to avoid scroll jumps
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                document.execCommand("copy");
+                showToast("AI 종합 리포트 텍스트가 클립보드에 무사히 저장되었습니다.", "success");
+            } catch (err) {
+                showToast("복사 작업을 수행할 권한이 유실되었습니다.", "error");
+            }
+            document.body.removeChild(textarea);
+        });
+
+        // Search bar listener
         tableSearch.addEventListener("input", renderMatrixTable);
 
         // App Run
