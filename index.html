@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>서울·경기 아파트 가치 고찰 시뮬레이터 v6.5</title>
+    <title>서울·경기 아파트 가치 고찰 시뮬레이터 v7.0</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -12,7 +12,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- MathJax for Beautiful LaTeX Rendering -->
+    <!-- MathJax for Elegant LaTeX Rendering -->
     <script>
         window.MathJax = {
             tex: {
@@ -49,15 +49,37 @@
         }
         /* Glassmorphism utility */
         .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
+            background: rgba(30, 41, 59, 0.75);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
     </style>
 </head>
 <body class="min-h-screen flex flex-col pb-12">
 
-    <!-- Header -->
+    <!-- Custom Modal/Dialog Notification System (Alert/Confirm Alternative) -->
+    <div id="custom-dialog-container" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm hidden transition-all duration-300">
+        <div class="bg-slate-900 border border-slate-700 max-w-md w-full rounded-2xl p-6 shadow-2xl flex flex-col gap-4 transform scale-95 transition-transform duration-300" id="custom-dialog-box">
+            <div class="flex items-start gap-4">
+                <div id="dialog-icon-bg" class="p-3 rounded-xl bg-indigo-500/10 text-indigo-400">
+                    <i id="dialog-icon" class="fa-solid fa-circle-info text-2xl"></i>
+                </div>
+                <div class="flex-grow">
+                    <h3 id="dialog-title" class="text-base font-extrabold text-white">알림</h3>
+                    <p id="dialog-message" class="text-sm text-slate-300 mt-1 leading-relaxed">알림 메시지 본문입니다.</p>
+                </div>
+            </div>
+            <div class="flex justify-end gap-2.5 mt-2">
+                <button id="dialog-btn-cancel" class="px-4 py-2 text-xs font-semibold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 rounded-lg transition">취소</button>
+                <button id="dialog-btn-confirm" class="px-5 py-2 text-xs font-extrabold text-white bg-indigo-600 hover:bg-indigo-500 rounded-lg transition shadow-lg shadow-indigo-600/15">확인</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Toast notifications -->
+    <div id="toast-container" class="fixed bottom-6 right-6 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- Header Section -->
     <header class="w-full py-6 px-6 md:px-12 border-b border-slate-800 glass-panel sticky top-0 z-40 flex flex-col md:flex-row justify-between items-center gap-4">
         <div class="flex items-center gap-3">
             <div class="bg-indigo-600 p-2.5 rounded-xl shadow-lg shadow-indigo-500/20">
@@ -67,18 +89,23 @@
                 <h1 class="text-xl md:text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-sky-400 to-emerald-400">
                     서울·경기 아파트 가치 고찰 시뮬레이터
                 </h1>
-                <p class="text-xs text-slate-400 mt-0.5">내재가치 실물 가산 모델 v6.5 (계약면적 및 0.35 스케일 튜닝 적용)</p>
+                <p class="text-xs text-slate-400 mt-0.5">내재가치 실물 가산 모델 v7.0 (계약면적 및 0.35 스케일 튜닝 적용)</p>
             </div>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3.5">
             <!-- DB Connection Status Badge -->
             <div id="db-status-badge" class="flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 border border-amber-500/30 text-amber-400">
                 <span class="relative flex h-2 w-2">
                     <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
                     <span class="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                 </span>
-                <span id="db-status-text">로컬 데모 모드 (저장 시 브라우저 보관)</span>
+                <span id="db-status-text">로딩 중...</span>
             </div>
+            
+            <!-- Audit Log History Button -->
+            <button onclick="toggleAuditLogModal(true)" class="text-xs font-medium text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 border border-slate-700 px-3 py-1.5 rounded-lg transition duration-200 flex items-center gap-1.5">
+                <i class="fa-solid fa-clock-rotate-left"></i> 📜 히스토리 로그
+            </button>
             <a href="#formula-guide" class="text-xs font-medium text-slate-400 hover:text-indigo-400 border border-slate-700 px-3 py-1.5 rounded-lg transition duration-200">
                 <i class="fa-solid fa-book-open mr-1"></i> 도큐먼트
             </a>
@@ -100,13 +127,13 @@
                     </span>
                 </div>
 
-                <!-- Basic Meta Info (Nickname, Region, District, Complex Name, Type) -->
+                <!-- Basic Meta Info -->
                 <div class="grid grid-cols-2 gap-3.5">
                     <div class="col-span-2">
-                        <label class="text-xs text-slate-400 font-semibold block mb-1">작성자 닉네임 (실시간 연동용)</label>
+                        <label class="text-xs text-slate-400 font-semibold block mb-1">작성자 닉네임 (실시간 로그 식별용)</label>
                         <div class="relative">
                             <i class="fa-solid fa-user absolute left-3 top-3 text-slate-500 text-xs"></i>
-                            <input type="text" id="input-author" placeholder="닉네임을 입력해 주세요" 
+                            <input type="text" id="input-author" placeholder="식별용 닉네임을 입력해 주세요" 
                                 class="w-full bg-slate-900/90 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-slate-200">
                         </div>
                     </div>
@@ -121,7 +148,7 @@
                     <div>
                         <label class="text-xs text-slate-400 font-semibold block mb-1">시·군·구 상세</label>
                         <select id="select-district" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-slate-200">
-                            <!-- Dynamic population based on Region -->
+                            <!-- Dynamic population -->
                         </select>
                     </div>
                     <div class="col-span-2">
@@ -136,7 +163,7 @@
                         <label class="text-xs text-slate-400 font-semibold block mb-1">평형 및 타입 정보</label>
                         <div class="relative">
                             <i class="fa-solid fa-layer-group absolute left-3 top-3 text-slate-500 text-xs"></i>
-                            <input type="text" id="input-size-type" placeholder="예: 34평 A타입, 84A" 
+                            <input type="text" id="input-size-type" placeholder="예: 34평 A타입, 24A" 
                                 class="w-full bg-slate-900/90 border border-slate-700 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-slate-200">
                         </div>
                     </div>
@@ -359,14 +386,14 @@
             <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-700/50 pb-4">
                 <div>
                     <h2 class="text-lg font-bold text-indigo-300 flex items-center gap-2">
-                        <i class="fa-solid fa-table-list text-indigo-400"></i> 서울·경기 주요 자산 비교 매트릭스
+                        <i class="fa-solid fa-table-list text-indigo-400"></i> 서울·경기·인천 주요 자산 비교 매트릭스
                     </h2>
-                    <p class="text-xs text-slate-400 mt-1">행더 클릭 시 해당 변수를 기준으로 테이블이 정렬됩니다. 단지를 클릭해 미세조정기에 값을 로드할 수 있습니다.</p>
+                    <p class="text-xs text-slate-400 mt-1">열 헤더를 클릭하여 해당 변수로 정렬 가능합니다. 각 단지를 선택하여 변수 조절기에 즉시 반영할 수 있습니다.</p>
                 </div>
                 <!-- Interactive Search/Filter bar -->
                 <div class="relative w-full md:w-72">
                     <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-500 text-xs"></i>
-                    <input type="text" id="table-search" placeholder="단지명 또는 행정구역 검색..." 
+                    <input type="text" id="table-search" placeholder="단지명, 행정구역, 닉네임 검색..." 
                         class="w-full bg-slate-900 border border-slate-700 rounded-lg pl-9 pr-4 py-2 text-xs focus:outline-none focus:border-indigo-500 text-slate-200">
                 </div>
             </div>
@@ -375,17 +402,17 @@
             <div class="overflow-x-auto w-full border border-slate-800 rounded-xl bg-slate-950/40">
                 <table class="w-full text-left text-xs border-collapse">
                     <thead>
-                        <tr class="bg-slate-900/90 text-slate-400 font-semibold uppercase border-b border-slate-800">
-                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition" onclick="sortTable('region')">시도 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50"></i></th>
-                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition" onclick="sortTable('district')">구·시·군 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50"></i></th>
-                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition" onclick="sortTable('name')">단지명 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50"></i></th>
-                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition" onclick="sortTable('sizeType')">평형/타입 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50"></i></th>
-                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition text-right" onclick="sortTable('households')">세대수 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50"></i></th>
-                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition text-right" onclick="sortTable('age')">연식 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50"></i></th>
-                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition text-right" onclick="sortTable('landArea')">대지지분 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50"></i></th>
-                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition text-right" onclick="sortTable('modelValue')">적정내재가 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50"></i></th>
-                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition text-right" onclick="sortTable('marketPrice')">시장호가 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50"></i></th>
-                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition text-center" onclick="sortTable('alphaPercent')">알파비율 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50"></i></th>
+                        <tr class="bg-slate-900/90 text-slate-400 font-semibold uppercase border-b border-slate-800 select-none">
+                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition" onclick="sortTable('region')">시도 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50" id="sort-region"></i></th>
+                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition" onclick="sortTable('district')">구·시·군 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50" id="sort-district"></i></th>
+                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition" onclick="sortTable('name')">단지명 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50" id="sort-name"></i></th>
+                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition" onclick="sortTable('sizeType')">평형/타입 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50" id="sort-sizeType"></i></th>
+                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition text-right" onclick="sortTable('households')">세대수 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50" id="sort-households"></i></th>
+                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition text-right" onclick="sortTable('buildingAge')">연식 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50" id="sort-buildingAge"></i></th>
+                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition text-right" onclick="sortTable('landArea')">대지지분 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50" id="sort-landArea"></i></th>
+                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition text-right" onclick="sortTable('modelValue')">적정내재가 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50" id="sort-modelValue"></i></th>
+                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition text-right" onclick="sortTable('marketPrice')">시장호가 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50" id="sort-marketPrice"></i></th>
+                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-800 transition text-center" onclick="sortTable('alphaPercent')">알파비율 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-50" id="sort-alphaPercent"></i></th>
                             <th class="py-3 px-4 text-center">동작</th>
                         </tr>
                     </thead>
@@ -411,7 +438,7 @@
                 <!-- Core Formula Card -->
                 <div class="bg-slate-900/60 border border-slate-800 p-6 rounded-xl flex flex-col gap-4">
                     <span class="text-xs text-indigo-400 font-extrabold tracking-wider uppercase">핵심 연산 대공식</span>
-                    <div class="text-center bg-slate-950 p-4 rounded-lg border border-slate-800 font-mono text-base text-emerald-400">
+                    <div class="text-center bg-slate-950 p-4 rounded-lg border border-slate-800 font-mono text-base text-emerald-400 col-span-2">
                         $$V = \big[ \text{땅값}(L) + \text{건물값}(B) \big] \times P_m + \alpha$$
                     </div>
                     <ul class="text-xs text-slate-400 flex flex-col gap-2 mt-2">
@@ -461,35 +488,65 @@
         </div>
     </section>
 
+    <!-- Audit Log History Overlay Modal -->
+    <div id="audit-log-modal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md hidden transition-all duration-300">
+        <div class="bg-slate-900 border border-slate-700/80 max-w-2xl w-full h-[85vh] rounded-2xl p-6 shadow-2xl flex flex-col gap-4 transform scale-95 transition-all duration-300">
+            <div class="flex justify-between items-center border-b border-slate-850 pb-3">
+                <h3 class="text-lg font-bold text-indigo-300 flex items-center gap-2">
+                    <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> 변경 이력 및 가치 복구(Rollback) 대장
+                </h3>
+                <button onclick="toggleAuditLogModal(false)" class="text-slate-400 hover:text-white text-lg font-bold transition p-1.5 hover:bg-slate-800 rounded-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            
+            <p class="text-xs text-slate-400">
+                누가, 언제, 어떤 단지 데이터를 등록/수정/삭제했는지 전체 히스토리가 투명하게 기록됩니다. 잘못 저장되었거나 삭제된 데이터가 있다면 복구 버튼을 눌러 이전 시점으로 데이터베이스를 되돌릴 수 있습니다.
+            </p>
+
+            <!-- Log Timeline Container -->
+            <div class="flex-grow overflow-y-auto pr-1 flex flex-col gap-3" id="log-timeline-container">
+                <!-- Dynamic Logs cards go here -->
+                <div class="text-center py-12 text-slate-500 text-xs">히스토리를 수신하는 중입니다...</div>
+            </div>
+            
+            <div class="flex justify-end border-t border-slate-850 pt-3">
+                <button onclick="toggleAuditLogModal(false)" class="px-5 py-2.5 bg-slate-800 hover:bg-slate-700 text-xs font-bold text-white rounded-lg transition">
+                    대장 닫기
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="mt-auto pt-12 border-t border-slate-900/80 text-center text-xs text-slate-500">
         <p>© 2026 서울·경기 아파트 가치 고찰 프로젝트. All Rights Reserved.</p>
         <p class="mt-1">Designed by Korean Apartment Valuation Enthusiasts Group.</p>
     </footer>
 
-    <!-- Firebase SDK Imports (Fallback logic handled via script) -->
+    <!-- Firebase SDK Modules with Anonymous Authentication -->
     <script type="module">
-        // 🔴 [Firebase 연동 설정 시 아래 주석들을 모두 해제해 주세요]
-        /*
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, signInAnonymously, getAuth } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, addDoc, updateDoc, deleteDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // 사용자 본인의 파이어베이스 콘솔 앱 설정 블록을 붙여넣으세요.
+        // User Provided Config
         const firebaseConfig = {
-            apiKey: "YOUR_API_KEY",
-            authDomain: "YOUR_AUTH_DOMAIN",
-            projectId: "YOUR_PROJECT_ID",
-            storageBucket: "YOUR_STORAGE_BUCKET",
-            messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-            appId: "YOUR_APP_ID"
+            apiKey: "AIzaSyBzANMS3iqirLdMYhBNuYGraf1PRaSnVG0",
+            authDomain: "apt-real-price.firebaseapp.com",
+            projectId: "apt-real-price",
+            storageBucket: "apt-real-price.firebasestorage.app",
+            messagingSenderId: "265060462522",
+            appId: "1:265060462522:web:b791ec8e03c1af79273783",
+            measurementId: "G-KR9NQG1CJH"
         };
-        */
 
-        // Placeholder fallback variable to check if Firebase is configured
+        // Initialize connection state variables
         let useFirebase = false;
         let db = null;
         let auth = null;
         let apartmentsCollection = null;
+        let logsCollection = null;
 
         // Dynamic Cascading region list mapper
         const districtMap = {
@@ -509,7 +566,7 @@
             ]
         };
 
-        // Static Pre-populated Real Estate Datasets (Total 25 core items in Seoul/Gyeonggi/Incheon)
+        // 25 Static Presets dataset
         const staticPresets = [
             { id: "static-1", author: "밸류마스터", region: "서울", district: "서초구", name: "아크로리버파크", sizeType: "34평(84타입)", landArea: 11.5, supplySize: 34, constructionPrice: 1000, buildingAge: 10, villaLandPrice: 12000, households: 1612, marketPrice: 44 },
             { id: "static-2", author: "재건축대장", region: "서울", district: "강남구", name: "은마아파트", sizeType: "31평(76타입)", landArea: 14.6, supplySize: 31, constructionPrice: 1000, buildingAge: 47, villaLandPrice: 11000, households: 4424, marketPrice: 24.5 },
@@ -603,7 +660,75 @@
         const tableSearch = document.getElementById("table-search");
         const matrixTbody = document.getElementById("matrix-tbody");
 
-        // Initialize cascading district selections
+        // Custom Modal Alert and Confirm Box (To fully bypass browser alerts)
+        function triggerInAppDialog({ title, message, isConfirm = false, onConfirm, onCancel }) {
+            const container = document.getElementById("custom-dialog-container");
+            const box = document.getElementById("custom-dialog-box");
+            
+            document.getElementById("dialog-title").innerText = title;
+            document.getElementById("dialog-message").innerText = message;
+            
+            const btnCancel = document.getElementById("dialog-btn-cancel");
+            const btnConfirm = document.getElementById("dialog-btn-confirm");
+            
+            if (isConfirm) {
+                btnCancel.classList.remove("hidden");
+                document.getElementById("dialog-icon").className = "fa-solid fa-triangle-exclamation text-2xl text-amber-400";
+                document.getElementById("dialog-icon-bg").className = "p-3 rounded-xl bg-amber-500/10 text-amber-400";
+            } else {
+                btnCancel.classList.add("hidden");
+                document.getElementById("dialog-icon").className = "fa-solid fa-circle-check text-2xl text-indigo-400";
+                document.getElementById("dialog-icon-bg").className = "p-3 rounded-xl bg-indigo-500/10 text-indigo-400";
+            }
+            
+            container.classList.remove("hidden");
+            setTimeout(() => box.classList.remove("scale-95"), 50);
+
+            // Event Bindings
+            btnConfirm.onclick = () => {
+                box.classList.add("scale-95");
+                container.classList.add("hidden");
+                if (onConfirm) onConfirm();
+            };
+            
+            btnCancel.onclick = () => {
+                box.classList.add("scale-95");
+                container.classList.add("hidden");
+                if (onCancel) onCancel();
+            };
+        }
+
+        // Custom Instant Toast Notification
+        function triggerToast(message, type = "success") {
+            const container = document.getElementById("toast-container");
+            const toast = document.createElement("div");
+            toast.className = "flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border text-xs font-semibold pointer-events-auto transition-all duration-300 transform translate-y-4 opacity-0";
+            
+            let iconHtml = '<i class="fa-solid fa-circle-check"></i>';
+            if (type === "success") {
+                toast.className += " bg-emerald-950/90 border-emerald-500/30 text-emerald-400";
+            } else if (type === "warning") {
+                toast.className += " bg-amber-950/90 border-amber-500/30 text-amber-400";
+                iconHtml = '<i class="fa-solid fa-triangle-exclamation"></i>';
+            } else {
+                toast.className += " bg-rose-950/90 border-rose-500/30 text-rose-400";
+                iconHtml = '<i class="fa-solid fa-circle-xmark"></i>';
+            }
+            
+            toast.innerHTML = `${iconHtml} <span>${message}</span>`;
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                toast.classList.remove("translate-y-4", "opacity-0");
+            }, 50);
+            
+            setTimeout(() => {
+                toast.classList.add("opacity-0", "translate-y-2");
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Cascade setup
         function updateDistrictDropdown() {
             const selectedRegion = elRegion.value;
             const districts = districtMap[selectedRegion] || [];
@@ -615,31 +740,19 @@
                 elDistrict.appendChild(opt);
             });
         }
-
         elRegion.addEventListener("change", updateDistrictDropdown);
 
-        // Core Mathematical Functions
+        // Mathematical Valuation engine v7.0
         function calculateValuation(landArea, supplySize, constPrice, age, villaPrice, households, marketPrice) {
-            // L = Land Area * Villa Land Price per Pyeong
-            const landVal = (landArea * villaPrice) / 10000; // in 억 원
-
-            // 1.4 contract area correction factor
+            const landVal = (landArea * villaPrice) / 10000;
             const contractSize = supplySize * 1.4;
-
-            // Age depreciation. Linearly depreciate 80% over 40 years. Cap age factor at min 0.20 (20% residual value floor)
             const ageFactor = 1 - 0.8 * Math.min(1, age / 40);
+            const buildingVal = (contractSize * constPrice * ageFactor) / 10000;
             
-            // B = Contract Area * Construction Cost * Residual Factor
-            const buildingVal = (contractSize * constPrice * ageFactor) / 10000; // in 억 원
-
-            // Pm = 1 + 0.35 * ln[(N/100)^2 + 1] / ln(401)
             const ratioSquare = Math.pow(households / 100, 2);
             const premiumMul = 1 + 0.35 * (Math.log(ratioSquare + 1) / Math.log(401));
-
-            // V_model = (L + B) * Pm
+            
             const modelVal = (landVal + buildingVal) * premiumMul;
-
-            // Alpha = Market Price - V_model
             const alpha = marketPrice - modelVal;
             const alphaPercent = (alpha / marketPrice) * 100;
 
@@ -655,7 +768,7 @@
             };
         }
 
-        // Live sync Sliders & calculate
+        // Live calculator triggers
         function runRealTimeAnalysis() {
             const landArea = parseFloat(slideLandArea.value);
             const supplySize = parseFloat(slideSupplySize.value);
@@ -665,7 +778,7 @@
             const households = parseInt(slideHouseholds.value);
             const marketPrice = parseFloat(slideMarketPrice.value);
 
-            // Display sliders text
+            // Display text syncs
             txtLandArea.textContent = `${landArea.toFixed(1)} 평`;
             txtSupplySize.textContent = `${supplySize} 평`;
             txtContractSize.textContent = `(계약면적 환산: ${(supplySize * 1.4).toFixed(1)} 평)`;
@@ -682,18 +795,17 @@
             txtPremiumMultiplier.textContent = `(대단지 가중치: ${calc.premiumMul.toFixed(2)}배)`;
             txtMarketPrice.textContent = `${marketPrice.toFixed(1)} 억원`;
 
-            // Display Outputs
+            // Core card display
             outModelVal.textContent = `${calc.modelVal.toFixed(2)} 억원`;
             outMarketVal.textContent = `${marketPrice.toFixed(1)} 억원`;
             
-            // Step Ledger Display
+            // Ledger logs
             ledgerLand.textContent = `${calc.landVal.toFixed(2)} 억원`;
             ledgerConstUnit.textContent = `${((supplySize * 1.4 * constPrice) / 10000).toFixed(2)} 억원`;
             ledgerBuilding.textContent = `${calc.buildingVal.toFixed(2)} 억원`;
             ledgerPremiumMul.textContent = `${calc.premiumMul.toFixed(2)} 배`;
             ledgerModelTotal.textContent = `${calc.modelVal.toFixed(2)} 억원`;
 
-            // Setup alpha status styles & logic
             let statusLabel = "";
             let statusColorClass = "";
             let alphaPrefix = calc.alpha >= 0 ? "+" : "";
@@ -701,27 +813,21 @@
             outAlphaVal.textContent = `${alphaPrefix}${calc.alpha.toFixed(2)} 억원 (${alphaPrefix}${calc.alphaPercent.toFixed(1)}%)`;
 
             if (calc.alphaPercent < -5) {
-                // Margin safe
                 statusLabel = "🛡️ 내재가치 저평가 (안전마진 확보)";
                 statusColorClass = "bg-emerald-500/10 border-emerald-500/40 text-emerald-400";
-                
-                barAlpha.style.backgroundColor = "#10b981"; // Emerald
+                barAlpha.style.backgroundColor = "#10b981";
                 lAlphaLabel.textContent = "안전 마진";
                 lAlphaIndicator.className = "w-2.5 h-2.5 bg-emerald-500 rounded-sm";
             } else if (calc.alphaPercent <= 15) {
-                // Fair valuation
                 statusLabel = "⚖️ 적정 가치 (이론가 조화 수렴)";
                 statusColorClass = "bg-sky-500/10 border-sky-500/40 text-sky-400";
-                
-                barAlpha.style.backgroundColor = "#38bdf8"; // Sky Blue
+                barAlpha.style.backgroundColor = "#38bdf8";
                 lAlphaLabel.textContent = "가치 편차";
                 lAlphaIndicator.className = "w-2.5 h-2.5 bg-sky-500 rounded-sm";
             } else {
-                // Bubbled valuation
                 statusLabel = "🚨 시장 과열 (입지 무형 거품지대)";
                 statusColorClass = "bg-rose-500/10 border-rose-500/40 text-rose-400";
-                
-                barAlpha.style.backgroundColor = "#f43f5e"; // Rose Red
+                barAlpha.style.backgroundColor = "#f43f5e";
                 lAlphaLabel.textContent = "입지 거품";
                 lAlphaIndicator.className = "w-2.5 h-2.5 bg-rose-500 rounded-sm";
             }
@@ -729,13 +835,10 @@
             cardStatusBg.className = `border p-4 rounded-xl flex flex-col justify-center transition-colors duration-300 ${statusColorClass}`;
             outAlphaStatus.textContent = statusLabel;
 
-            // Update Breakdown Stack Bar (L + B) * Pm + Alpha
-            // Normalize breakdown pieces to fit inside the 100% bar.
-            // Component values: Land, Building, Premium, Alpha (absolute size, but alpha can be negative!)
             const rawLand = calc.landVal;
             const rawBuilding = calc.buildingVal;
             const rawPremium = (calc.landVal + calc.buildingVal) * (calc.premiumMul - 1);
-            const rawAlpha = Math.max(0, calc.alpha); // Draw positive alpha as bubble, if negative, it's safe margin (allocated differently)
+            const rawAlpha = Math.max(0, calc.alpha);
 
             const totalSum = rawLand + rawBuilding + rawPremium + rawAlpha;
             
@@ -756,44 +859,98 @@
             txtTotalPercent.textContent = `합계: ${(pctLand + pctBuilding + pctPremium + pctAlpha).toFixed(0)}%`;
         }
 
-        // Add event listeners to sliders
         [slideLandArea, slideSupplySize, slideConstPrice, slideBuildingAge, slideVillaPrice, slideHouseholds, slideMarketPrice].forEach(slider => {
             slider.addEventListener("input", runRealTimeAnalysis);
         });
 
-        // Initialize Table List and CRUD Data Flow
-        function initAppEngine() {
-            // Check LocalStorage fallback
+        // Main initialization of Firestore
+        async function connectToCloudFirebase() {
+            try {
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+
+                // strict isolation collections
+                apartmentsCollection = collection(db, "artifacts", "apt-real-price", "public", "data", "apartments");
+                logsCollection = collection(db, "artifacts", "apt-real-price", "public", "data", "logs");
+
+                // Execute anonymous Auth beforehand to prevent permission issues
+                await signInAnonymously(auth);
+                useFirebase = true;
+
+                // Sync status badges
+                const badge = document.getElementById("db-status-badge");
+                const badgeText = document.getElementById("db-status-text");
+                badge.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400";
+                badgeText.innerHTML = `<span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span> 서버 동기화 활성화`;
+
+                // Realtime synchronization of database (No complex indexes, standard listening)
+                onSnapshot(apartmentsCollection, (snapshot) => {
+                    const cloudList = [];
+                    snapshot.forEach((doc) => {
+                        cloudList.push({ id: doc.id, ...doc.data() });
+                    });
+                    appData = [...staticPresets, ...cloudList];
+                    renderMatrixTable();
+                });
+
+                // Realtime synchronization of transaction audit logs
+                const logsQuery = query(logsCollection);
+                onSnapshot(logsQuery, (snapshot) => {
+                    const logs = [];
+                    snapshot.forEach((doc) => {
+                        logs.push({ id: doc.id, ...doc.data() });
+                    });
+                    // Sort logs client-side to prevent Composite Index requirement
+                    logs.sort((a, b) => b.timestamp - a.timestamp);
+                    renderLogsModalUI(logs);
+                });
+
+                triggerToast("파이어베이스 서버에 무사히 연결되었습니다.", "success");
+            } catch (err) {
+                console.warn("Firestore connection failed. Running on fallback LocalStorage mode:", err);
+                useFirebase = false;
+                
+                const badge = document.getElementById("db-status-badge");
+                const badgeText = document.getElementById("db-status-text");
+                badge.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 border border-amber-500/30 text-amber-400";
+                badgeText.textContent = "로컬 데모 모드 (저장 시 브라우저 보관)";
+                
+                initLocalFallbackEngine();
+            }
+        }
+
+        // LocalStorage Fallback system
+        function initLocalFallbackEngine() {
             const stored = localStorage.getItem("seoul_apt_user_wiki_data");
             let userList = [];
             if (stored) {
-                try {
-                    userList = JSON.parse(stored);
-                } catch(e) {
-                    userList = [];
-                }
+                try { userList = JSON.parse(stored); } catch(e) { userList = []; }
             }
-
-            // Combine presets & user lists
             appData = [...staticPresets, ...userList];
             renderMatrixTable();
-            updateDistrictDropdown();
-            runRealTimeAnalysis();
+            
+            const storedLogs = localStorage.getItem("seoul_apt_wiki_logs");
+            let logsList = [];
+            if (storedLogs) {
+                try { logsList = JSON.parse(storedLogs); } catch(e) { logsList = []; }
+            }
+            renderLogsModalUI(logsList);
         }
 
-        // Render visual table rows
+        // Render comparison table
         function renderMatrixTable() {
             const searchTerm = tableSearch.value.trim().toLowerCase();
             
-            // Filter
             let filtered = appData.filter(item => {
                 const matchRegion = item.region.toLowerCase().includes(searchTerm);
                 const matchDistrict = item.district.toLowerCase().includes(searchTerm);
                 const matchName = item.name.toLowerCase().includes(searchTerm);
-                return matchRegion || matchDistrict || matchName;
+                const matchAuthor = (item.author || "").toLowerCase().includes(searchTerm);
+                return matchRegion || matchDistrict || matchName || matchAuthor;
             });
 
-            // Calculate active dynamic metrics for sorting
+            // Populate calculations in memory
             filtered.forEach(item => {
                 const calc = calculateValuation(
                     item.landArea, item.supplySize, item.constructionPrice, 
@@ -804,26 +961,34 @@
                 item.alphaPercent = calc.alphaPercent;
             });
 
-            // Sort logic
+            // Sort list
             filtered.sort((a, b) => {
                 let valA = a[currentSortKey];
                 let valB = b[currentSortKey];
 
-                // Text compare
                 if (typeof valA === 'string') {
                     return currentSortOrder === "asc" 
-                        ? valA.localeCompare(valB) 
-                        : valB.localeCompare(valA);
+                        ? valA.localeCompare(valB, 'ko') 
+                        : valB.localeCompare(valA, 'ko');
                 }
-                
-                // Numeric compare
                 return currentSortOrder === "asc" ? valA - valB : valB - valA;
             });
+
+            // Visual update of Sort Icons in Headers
+            document.querySelectorAll("th i").forEach(icon => {
+                icon.className = "fa-solid fa-sort text-[10px] ml-1 opacity-40";
+            });
+            const activeHeaderIcon = document.getElementById(`sort-${currentSortKey}`);
+            if (activeHeaderIcon) {
+                activeHeaderIcon.className = currentSortOrder === "asc" 
+                    ? "fa-solid fa-sort-up text-[10px] ml-1 text-indigo-400 font-extrabold" 
+                    : "fa-solid fa-sort-down text-[10px] ml-1 text-indigo-400 font-extrabold";
+            }
 
             matrixTbody.innerHTML = "";
 
             if (filtered.length === 0) {
-                matrixTbody.innerHTML = `<tr><td colspan="11" class="py-8 text-center text-slate-500">조건에 부합하는 아파트 정보가 존재하지 않습니다.</td></tr>`;
+                matrixTbody.innerHTML = `<tr><td colspan="11" class="py-12 text-center text-slate-500 font-semibold">검색 조건에 맞는 아파트 데이터를 찾을 수 없습니다.</td></tr>`;
                 return;
             }
 
@@ -846,13 +1011,12 @@
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-slate-900/40 cursor-pointer transition border-b border-slate-800/40";
                 
-                // Row clicking loads values to editor
                 tr.innerHTML = `
                     <td class="py-3 px-4 font-medium text-slate-400" onclick="loadItemToEditor('${item.id}')">${item.region}</td>
                     <td class="py-3 px-4 font-semibold text-slate-300" onclick="loadItemToEditor('${item.id}')">${item.district}</td>
                     <td class="py-3 px-4 font-bold text-white flex items-center gap-1.5" onclick="loadItemToEditor('${item.id}')">
                         ${isCustom ? '<i class="fa-solid fa-star text-amber-400 text-[10px]"></i>' : ''} ${item.name}
-                        <span class="text-[9px] text-slate-500 font-normal">by ${item.author}</span>
+                        <span class="text-[9px] text-slate-500 font-normal">by ${item.author || "비공개"}</span>
                     </td>
                     <td class="py-3 px-4 text-slate-300" onclick="loadItemToEditor('${item.id}')">${item.sizeType}</td>
                     <td class="py-3 px-4 text-right font-mono" onclick="loadItemToEditor('${item.id}')">${item.households.toLocaleString()} 세대</td>
@@ -869,7 +1033,7 @@
                                 <i class="fa-solid fa-pen-to-square"></i>
                             </button>
                             ${isCustom ? `
-                            <button onclick="deleteCustomItem(event, '${item.id}')" class="p-1 px-2 text-rose-400 hover:bg-rose-500/10 rounded border border-rose-500/20 transition" title="목록 삭제">
+                            <button onclick="deleteAptItem(event, '${item.id}', '${item.name}')" class="p-1 px-2 text-rose-400 hover:bg-rose-500/10 rounded border border-rose-500/20 transition" title="목록 삭제">
                                 <i class="fa-solid fa-trash-can"></i>
                             </button>` : `<span class="text-slate-600 text-[10px] italic py-1">고정</span>`}
                         </div>
@@ -879,7 +1043,7 @@
             });
         }
 
-        // Sorting Toggle Engine
+        // Table sorting click handler
         window.sortTable = function(key) {
             if (currentSortKey === key) {
                 currentSortOrder = currentSortOrder === "asc" ? "desc" : "asc";
@@ -890,22 +1054,160 @@
             renderMatrixTable();
         };
 
-        // Load Preset Item variables into left sliders
+        // Write transaction logs (Audit Logs)
+        async function logTransaction(action, author, targetName, targetId, snapshot) {
+            const logEntry = {
+                timestamp: Date.now(),
+                action,
+                author,
+                targetName,
+                targetId,
+                snapshot
+            };
+
+            if (useFirebase) {
+                try {
+                    await addDoc(logsCollection, logEntry);
+                } catch (e) {
+                    console.error("Firestore logging failed:", e);
+                }
+            } else {
+                // LocalStorage logs fallback
+                const storedLogs = localStorage.getItem("seoul_apt_wiki_logs");
+                let logsList = [];
+                if (storedLogs) {
+                    try { logsList = JSON.parse(storedLogs); } catch(e) { logsList = []; }
+                }
+                logsList.unshift(logEntry);
+                localStorage.setItem("seoul_apt_wiki_logs", JSON.stringify(logsList));
+                renderLogsModalUI(logsList);
+            }
+        }
+
+        // Global audit log modal view toggler
+        window.toggleAuditLogModal = function(show) {
+            const modal = document.getElementById("audit-log-modal");
+            if (show) {
+                modal.classList.remove("hidden");
+                // Trigger refresh if LocalStorage is active
+                if (!useFirebase) {
+                    initLocalFallbackEngine();
+                }
+            } else {
+                modal.classList.add("hidden");
+            }
+        };
+
+        // Render Logs inside History modal
+        function renderLogsModalUI(logs) {
+            const container = document.getElementById("log-timeline-container");
+            container.innerHTML = "";
+
+            if (logs.length === 0) {
+                container.innerHTML = `<div class="text-center py-12 text-slate-500 text-xs">기록된 히스토리 이력이 아직 존재하지 않습니다.</div>`;
+                return;
+            }
+
+            logs.forEach(log => {
+                const dateText = new Date(log.timestamp).toLocaleString("ko-KR");
+                let actionBadge = "";
+                let cardBorder = "border-slate-800";
+                
+                if (log.action === "CREATE") {
+                    actionBadge = `<span class="bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded text-[10px] font-bold">등록</span>`;
+                } else if (log.action === "UPDATE") {
+                    actionBadge = `<span class="bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded text-[10px] font-bold">수정</span>`;
+                } else if (log.action === "DELETE") {
+                    actionBadge = `<span class="bg-rose-500/10 text-rose-400 border border-rose-500/20 px-2 py-0.5 rounded text-[10px] font-bold">삭제</span>`;
+                    cardBorder = "border-rose-950/40 bg-rose-950/5";
+                } else if (log.action === "ROLLBACK") {
+                    actionBadge = `<span class="bg-amber-500/10 text-amber-400 border border-amber-500/20 px-2 py-0.5 rounded text-[10px] font-bold">복구</span>`;
+                    cardBorder = "border-amber-950/40 bg-amber-950/5";
+                }
+
+                const card = document.createElement("div");
+                card.className = `p-4 border ${cardBorder} rounded-xl bg-slate-900/60 flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs`;
+                
+                card.innerHTML = `
+                    <div class="flex flex-col gap-1.5 flex-grow">
+                        <div class="flex items-center gap-2">
+                            ${actionBadge}
+                            <span class="text-slate-300 font-bold">${log.targetName}</span>
+                            <span class="text-[10px] text-slate-500">(${log.snapshot ? log.snapshot.sizeType : ''})</span>
+                        </div>
+                        <div class="text-slate-400 leading-relaxed text-[11px]">
+                            작업자: <strong class="text-slate-300">${log.author}</strong> • 
+                            ${log.snapshot ? `지분 ${log.snapshot.landArea}평, ${log.snapshot.households}세대, 호가 ${log.snapshot.marketPrice}억` : '데이터 말소'}
+                        </div>
+                        <div class="text-[10px] text-slate-500 font-mono flex items-center gap-1">
+                            <i class="fa-solid fa-clock"></i> ${dateText}
+                        </div>
+                    </div>
+                    <div>
+                        ${log.snapshot ? `
+                        <button onclick="restoreFromSnapshotLog('${log.targetId}', ${JSON.stringify(log.snapshot).replace(/"/g, '&quot;')}, '${log.author}')" 
+                                class="px-3.5 py-1.5 bg-indigo-600/20 hover:bg-indigo-600/30 border border-indigo-500/30 text-indigo-300 font-bold hover:text-indigo-200 rounded-lg transition-all text-[11px] flex items-center gap-1 shadow-inner">
+                            <i class="fa-solid fa-rotate-left"></i> 이 시점으로 복구
+                        </button>` : `<span class="text-[10px] text-slate-600 italic">복구 불가</span>`}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // ROLLBACK triggering logic
+        window.restoreFromSnapshotLog = async function(id, snapshot, logAuthor) {
+            const author = elAuthor.value.trim() || "복구마스터";
+            
+            triggerInAppDialog({
+                title: "⚠️ 데이터베이스 롤백",
+                message: `작성자 [${logAuthor}]님이 등록한 [${snapshot.name}] 단지 정보 시점으로 복구하시겠습니까? 현재 활성화된 아파트 정보가 이 버전으로 덮어씌워집니다.`,
+                isConfirm: true,
+                onConfirm: async () => {
+                    if (useFirebase) {
+                        try {
+                            const docRef = doc(db, "artifacts", "apt-real-price", "public", "data", "apartments", id);
+                            await setDoc(docRef, snapshot);
+                            await logTransaction("ROLLBACK", author, snapshot.name, id, snapshot);
+                            triggerToast(`[${snapshot.name}] 단지를 성공적으로 복구했습니다!`, "success");
+                        } catch (e) {
+                            triggerToast("데이터베이스 복구에 실패했습니다.", "error");
+                        }
+                    } else {
+                        // Localstorage rollback
+                        let userList = [];
+                        const stored = localStorage.getItem("seoul_apt_user_wiki_data");
+                        if (stored) {
+                            try { userList = JSON.parse(stored); } catch(e) { userList = []; }
+                        }
+                        
+                        userList = userList.filter(item => item.id !== id);
+                        userList.push({ id, ...snapshot });
+                        localStorage.setItem("seoul_apt_user_wiki_data", JSON.stringify(userList));
+                        
+                        await logTransaction("ROLLBACK", author, snapshot.name, id, snapshot);
+                        triggerToast(`[${snapshot.name}] 단지를 로컬 백업에서 성공적으로 복구했습니다.`, "success");
+                        initAppEngine();
+                    }
+                    toggleAuditLogModal(false);
+                }
+            });
+        };
+
+        // Load item details to sliders
         window.loadItemToEditor = function(id) {
             const item = appData.find(i => i.id === id);
             if (!item) return;
 
             currentEditingId = item.id;
             
-            // Set basic info values
             elRegion.value = item.region;
             updateDistrictDropdown();
             elDistrict.value = item.district;
             elAptName.value = item.name;
             elSizeType.value = item.sizeType;
-            elAuthor.value = item.author || "비공개";
+            elAuthor.value = item.author || "";
 
-            // Set sliders
             slideLandArea.value = item.landArea;
             slideSupplySize.value = item.supplySize;
             slideConstPrice.value = item.constructionPrice || 1000;
@@ -914,28 +1216,31 @@
             slideHouseholds.value = item.households;
             slideMarketPrice.value = item.marketPrice;
 
-            // Trigger analysis
             runRealTimeAnalysis();
 
-            // Toggle Edit mode visuals
+            // Transform Button style to update-mode
             editIndicator.classList.remove("hidden");
             btnSaveText.textContent = "⚠️ 선택 단지 가치 정보 수정 완료";
             btnSave.className = "w-full bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white py-3 rounded-xl font-bold text-sm transition duration-300 shadow-lg shadow-rose-600/20 active:scale-95 flex items-center justify-center gap-2";
             
-            // Auto scroll to top on mobile
             window.scrollTo({ top: 0, behavior: 'smooth' });
+            triggerToast(`[${item.name}] 아파트 변수들이 미세조정기에 채워졌습니다.`, "success");
         };
 
-        // Save new user example or update edit item
-        btnSave.addEventListener("click", () => {
-            const author = elAuthor.value.trim() || "무명씨";
+        // Create or Update Apartment data
+        btnSave.addEventListener("click", async () => {
+            const author = elAuthor.value.trim() || "무명자산가";
             const name = elAptName.value.trim();
             const sizeType = elSizeType.value.trim() || "34평형";
             const region = elRegion.value;
             const district = elDistrict.value;
 
             if (!name) {
-                alert("가치 고찰을 위해 아파트 단지명을 입력해 주세요.");
+                triggerInAppDialog({
+                    title: "⚠️ 단지명 누락",
+                    message: "가치 고찰을 위해 아파트 단지명을 명확하게 입력해 주세요.",
+                    isConfirm: false
+                });
                 elAptName.focus();
                 return;
             }
@@ -956,10 +1261,25 @@
             };
 
             if (useFirebase) {
-                // Future Firebase writing operation
-                // handleFirebaseWrite(payload);
+                try {
+                    if (currentEditingId && !currentEditingId.startsWith("static-")) {
+                        // UPDATE mode
+                        const docRef = doc(db, "artifacts", "apt-real-price", "public", "data", "apartments", currentEditingId);
+                        await updateDoc(docRef, payload);
+                        await logTransaction("UPDATE", author, name, currentEditingId, payload);
+                        triggerToast(`[${name}] 단지 가치를 성공적으로 수정하여 동기화했습니다.`, "success");
+                    } else {
+                        // CREATE mode
+                        const docRef = await addDoc(apartmentsCollection, payload);
+                        await logTransaction("CREATE", author, name, docRef.id, payload);
+                        triggerToast(`신규 단지 [${name}]의 가치 고찰 데이터가 실시간 업로드되었습니다!`, "success");
+                    }
+                    resetEditorState();
+                } catch (e) {
+                    triggerToast("서버 저장에 실패했습니다. 파이어베이스 권한을 확인하세요.", "error");
+                }
             } else {
-                // LocalStorage Fallback logic
+                // FALLBACK LocalStorage Save
                 let userList = [];
                 const stored = localStorage.getItem("seoul_apt_user_wiki_data");
                 if (stored) {
@@ -967,17 +1287,18 @@
                 }
 
                 if (currentEditingId && !currentEditingId.startsWith("static-")) {
-                    // Update existing custom item
                     userList = userList.map(item => {
-                        if (item.id === currentEditingId) {
-                            return { ...item, ...payload };
-                        }
+                        if (item.id === currentEditingId) return { ...item, ...payload };
                         return item;
                     });
+                    await logTransaction("UPDATE", author, name, currentEditingId, payload);
+                    triggerToast(`[${name}] 가치가 로컬 저장소에 성공적으로 반영되었습니다.`, "success");
                 } else {
-                    // Insert brand new custom item
-                    payload.id = `user-${Date.now()}`;
+                    const newId = `user-${Date.now()}`;
+                    payload.id = newId;
                     userList.push(payload);
+                    await logTransaction("CREATE", author, name, newId, payload);
+                    triggerToast(`신규 단지 [${name}] 가치 데이터가 로컬에 생성되었습니다.`, "success");
                 }
 
                 localStorage.setItem("seoul_apt_user_wiki_data", JSON.stringify(userList));
@@ -986,30 +1307,53 @@
             }
         });
 
-        // Delete Custom Item Flow
-        window.deleteCustomItem = function(event, id) {
-            event.stopPropagation(); // Avoid triggering loading selection
-            if (!confirm("해당 단지 데이터를 삭제하시겠습니까?")) return;
+        // Delete Custom Apartment
+        window.deleteAptItem = function(event, id, name) {
+            event.stopPropagation();
+            const author = elAuthor.value.trim() || "삭제관리인";
 
-            if (useFirebase) {
-                // Future Firebase delete operation
-                // handleFirebaseDelete(id);
-            } else {
-                let userList = [];
-                const stored = localStorage.getItem("seoul_apt_user_wiki_data");
-                if (stored) {
-                    try { userList = JSON.parse(stored); } catch(e) { userList = []; }
+            // Find current data for logging snapshot prior to deletion
+            const originalItem = appData.find(item => item.id === id);
+            const snapshot = originalItem ? { ...originalItem } : null;
+            if (snapshot) delete snapshot.id; // Strip local id
+
+            triggerInAppDialog({
+                title: "🚨 단지 영구 삭제",
+                message: `[${name}] 아파트의 가치 고찰 데이터를 정말 데이터베이스에서 영구 삭제하시겠습니까?`,
+                isConfirm: true,
+                onConfirm: async () => {
+                    if (useFirebase) {
+                        try {
+                            const docRef = doc(db, "artifacts", "apt-real-price", "public", "data", "apartments", id);
+                            await deleteDoc(docRef);
+                            await logTransaction("DELETE", author, name, id, snapshot);
+                            triggerToast(`[${name}] 아파트가 무사히 삭제되었습니다.`, "warning");
+                        } catch (e) {
+                            triggerToast("서버 삭제에 실패했습니다.", "error");
+                        }
+                    } else {
+                        // Localstorage delete
+                        let userList = [];
+                        const stored = localStorage.getItem("seoul_apt_user_wiki_data");
+                        if (stored) {
+                            try { userList = JSON.parse(stored); } catch(e) { userList = []; }
+                        }
+                        userList = userList.filter(item => item.id !== id);
+                        localStorage.setItem("seoul_apt_user_wiki_data", JSON.stringify(userList));
+                        
+                        await logTransaction("DELETE", author, name, id, snapshot);
+                        triggerToast(`[${name}] 아파트가 로컬 브라우저에서 제거되었습니다.`, "warning");
+                        initAppEngine();
+                    }
+
+                    if (currentEditingId === id) {
+                        resetEditorState();
+                    }
                 }
-                userList = userList.filter(item => item.id !== id);
-                localStorage.setItem("seoul_apt_user_wiki_data", JSON.stringify(userList));
-                
-                if (currentEditingId === id) {
-                    resetEditorState();
-                }
-                initAppEngine();
-            }
+            });
         };
 
+        // Reset inputs state
         function resetEditorState() {
             currentEditingId = null;
             elAptName.value = "";
@@ -1019,12 +1363,13 @@
             btnSave.className = "w-full bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white py-3 rounded-xl font-bold text-sm transition duration-300 shadow-lg shadow-indigo-600/20 active:scale-95 flex items-center justify-center gap-2";
         }
 
-        // Search bar listener
+        // Live table search listener
         tableSearch.addEventListener("input", renderMatrixTable);
 
-        // Run engine load
+        // Run setup and connection on window loaded
         window.onload = function() {
             initAppEngine();
+            connectToCloudFirebase();
         };
     </script>
 </body>
