@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>서울·경기·인천 아파트 가치 고찰 시뮬레이터 v8.2</title>
+    <title>서울·경기·인천 아파트 가치 고찰 시뮬레이터 v9.0</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -12,6 +12,8 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- SheetJS for Premium Excel (.xlsx) Import Parsing -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <!-- MathJax for Beautiful LaTeX Rendering -->
     <script>
         window.MathJax = {
@@ -67,7 +69,7 @@
                 <h1 class="text-xl md:text-2xl font-extrabold tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-sky-400 to-emerald-400">
                     서울·경기·인천 아파트 가치 시뮬레이터
                 </h1>
-                <p class="text-xs text-slate-400 mt-0.5">Gemini AI 입지 진단 센터 & 무손실 감사 로그 복원 시스템 v8.2</p>
+                <p class="text-xs text-slate-400 mt-0.5">실물 내재가치 가산 밸류에이션 및 무손실 감사 로그 복원 시스템 v9.0</p>
             </div>
         </div>
         
@@ -91,7 +93,7 @@
 
             <!-- Audit Log History Button -->
             <button id="btn-show-history" class="text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-lg border border-slate-700 transition duration-200 flex items-center gap-1.5">
-                <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> 📜 히스토리 로그
+                <i class="fa-solid fa-clock-rotate-left text-indigo-400"></i> 📜  히스토리 로그
             </button>
             
             <a href="#formula-guide" class="text-xs font-medium text-slate-400 hover:text-indigo-400 border border-slate-850 px-3 py-2 rounded-lg transition duration-200">
@@ -125,33 +127,41 @@
                                 class="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-slate-200 transition">
                         </div>
                     </div>
-                    <div>
-                        <label class="text-xs text-slate-400 font-semibold block mb-1">행정구역 (도/시)</label>
-                        <select id="select-region" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-slate-200 cursor-pointer transition">
-                            <option value="서울특별시">서울특별시</option>
-                            <option value="경기도">경기도</option>
-                            <option value="인천광역시">인천광역시</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="text-xs text-slate-400 font-semibold block mb-1">상세 자치구 (지역 묶음)</label>
-                        <select id="select-district" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-slate-200 cursor-pointer transition">
-                            <!-- Dynamic population based on cascading selects -->
-                        </select>
-                    </div>
-                    <div class="col-span-2">
-                        <label class="text-xs text-slate-400 font-semibold block mb-1">아파트 단지명 <span class="text-purple-400 font-extrabold select-none">(★ AI 검색창 겸용)</span></label>
-                        <div class="relative">
-                            <i class="fa-solid fa-building absolute left-3 top-3 text-slate-500 text-xs"></i>
-                            <input type="text" id="input-apt-name" placeholder="검색 또는 입력 (예: 마래푸, 대치은마, 자양하늘채)" 
-                                class="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-slate-200 transition font-bold placeholder-slate-600">
+                    <div class="col-span-2 grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="text-xs text-slate-400 font-semibold block mb-1">도/시</label>
+                            <select id="select-region" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-xs focus:outline-none focus:border-indigo-500 text-slate-200 cursor-pointer transition">
+                                <option value="서울특별시">서울특별시</option>
+                                <option value="경기도">경기도</option>
+                                <option value="인천광역시">인천광역시</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 font-semibold block mb-1">구/시/군</label>
+                            <select id="select-district" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-xs focus:outline-none focus:border-indigo-500 text-slate-200 cursor-pointer transition">
+                                <!-- Dynamic district options -->
+                            </select>
+                        </div>
+                        <div>
+                            <label class="text-xs text-slate-400 font-semibold block mb-1">상세지역 (동)</label>
+                            <select id="select-sub-district" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-2 py-2 text-xs focus:outline-none focus:border-indigo-500 text-slate-200 cursor-pointer transition">
+                                <!-- Dynamic sub-district options -->
+                            </select>
                         </div>
                     </div>
                     <div class="col-span-2">
-                        <label class="text-xs text-slate-400 font-semibold block mb-1">평형 및 타입 규격 <span class="text-slate-500">(비워두면 AI가 전용84㎡ 국평 기준 탐색)</span></label>
+                        <label class="text-xs text-slate-400 font-semibold block mb-1">아파트 단지명 <span class="text-indigo-400 font-bold">(★ 자연어 AI 수집창 겸용)</span></label>
+                        <div class="relative">
+                            <i class="fa-solid fa-building absolute left-3 top-3 text-slate-500 text-xs"></i>
+                            <input type="text" id="input-apt-name" placeholder="아파트 단지명 입력" 
+                                class="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-slate-200 transition">
+                        </div>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="text-xs text-slate-400 font-semibold block mb-1">평형 및 타입 규격 <span class="text-slate-500">(비워두면 AI가 전용 84㎡ 국평 기준 색인)</span></label>
                         <div class="relative">
                             <i class="fa-solid fa-cubes absolute left-3 top-3 text-slate-500 text-xs"></i>
-                            <input type="text" id="input-size-type" placeholder="예: 34평형 A타입, 전용 59 (공백 가능)" 
+                            <input type="text" id="input-size-type" placeholder="예: 34평형 A타입, 전용 84㎡" 
                                 class="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-9 pr-3 py-2 text-sm focus:outline-none focus:border-indigo-500 text-slate-200 transition">
                         </div>
                     </div>
@@ -260,6 +270,54 @@
                     </div>
                 </div>
 
+                <!-- 🛠️ Collapsible Advanced Weights Settings -->
+                <div class="border-t border-slate-800/60 pt-4">
+                    <button id="btn-toggle-advanced" type="button" class="w-full flex justify-between items-center text-xs font-bold text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-wider select-none focus:outline-none">
+                        <span><i class="fa-solid fa-gears mr-1"></i> 고급 가중치 미세 설정</span>
+                        <i id="icon-toggle-advanced" class="fa-solid fa-chevron-down text-[10px] transition-transform duration-300"></i>
+                    </button>
+                    
+                    <div id="advanced-weights-panel" class="hidden mt-4 space-y-4 bg-slate-950/40 p-4 rounded-xl border border-slate-900">
+                        <!-- Scale Premium Weight -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs text-slate-400 font-semibold flex items-center gap-1.5">
+                                    <i class="fa-solid fa-chart-line text-indigo-400"></i> 대단지 프리미엄 강도 ($w_m$)
+                                </span>
+                                <span class="text-xs font-bold text-indigo-400 font-mono" id="val-scale-weight">0.35 배</span>
+                            </div>
+                            <input type="range" id="slide-scale-weight" min="0.0" max="1.0" step="0.01" value="0.35" 
+                                class="w-full accent-indigo-500 bg-slate-950 h-1.5 rounded-lg appearance-none cursor-pointer">
+                        </div>
+
+                        <!-- Contract Area Ratio -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs text-slate-400 font-semibold flex items-center gap-1.5">
+                                    <i class="fa-solid fa-expand text-sky-400"></i> 계약면적 환산 배율 ($f_c$)
+                                </span>
+                                <span class="text-xs font-bold text-sky-400 font-mono" id="val-contract-ratio">1.40 배</span>
+                            </div>
+                            <input type="range" id="slide-contract-ratio" min="1.0" max="2.0" step="0.05" value="1.40" 
+                                class="w-full accent-sky-500 bg-slate-950 h-1.5 rounded-lg appearance-none cursor-pointer">
+                        </div>
+
+                        <!-- Building Residual Floor -->
+                        <div>
+                            <div class="flex justify-between items-center mb-1">
+                                <span class="text-xs text-slate-400 font-semibold flex items-center gap-1.5">
+                                    <i class="fa-solid fa-shield-halved text-rose-400"></i> 건물 최저 잔존가율 ($r_b$)
+                                </span>
+                                <span class="text-xs font-bold text-rose-400 font-mono" id="val-residual-floor">20 %</span>
+                            </div>
+                            <input type="range" id="slide-residual-floor" min="10" max="50" step="5" value="20" 
+                                class="w-full accent-rose-500 bg-slate-955 h-1.5 rounded-lg appearance-none cursor-pointer">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="border-t border-slate-800/60 my-2"></div>
+
                 <!-- Save Action Button -->
                 <button id="btn-save" class="w-full bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white py-3 rounded-xl font-bold text-sm transition duration-300 shadow-lg shadow-indigo-600/20 active:scale-95 flex items-center justify-center gap-2">
                     <i class="fa-solid fa-cloud-arrow-up"></i> <span id="btn-save-text">현재 조건 예시로 등록 / 저장</span>
@@ -280,12 +338,12 @@
 
                 <!-- Real-time metrics dashboard grid -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-slate-955/80 border border-slate-850 p-4 rounded-xl flex flex-col justify-center">
+                    <div class="bg-slate-950/80 border border-slate-850 p-4 rounded-xl flex flex-col justify-center">
                         <span class="text-xs text-slate-400 font-semibold">수학적 적정 내재 가치</span>
                         <span id="output-model-val" class="text-2xl font-black text-emerald-400 mt-1 font-mono">0.0 억원</span>
                         <span class="text-[10px] text-slate-500 mt-0.5">[(땅값+건물값) × Pm]</span>
                     </div>
-                    <div class="bg-slate-955/80 border border-slate-850 p-4 rounded-xl flex flex-col justify-center">
+                    <div class="bg-slate-950/80 border border-slate-850 p-4 rounded-xl flex flex-col justify-center">
                         <span class="text-xs text-slate-400 font-semibold">현재 시장 거래 호가</span>
                         <span id="output-market-val" class="text-2xl font-black text-purple-400 mt-1 font-mono">0.0 억원</span>
                         <span class="text-[10px] text-slate-500 mt-0.5">사용자 입력 슬라이더 값</span>
@@ -336,7 +394,7 @@
                 <!-- Ledger list values -->
                 <div class="flex flex-col gap-3">
                     <span class="text-xs text-indigo-300 font-semibold"><i class="fa-solid fa-list-check"></i> 수학적 세부 가산 대장</span>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-slate-950/50 p-4 rounded-xl border border-slate-850">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs bg-slate-955/50 p-4 rounded-xl border border-slate-855 text-slate-300">
                         <div class="flex justify-between items-center py-1 border-b border-slate-850">
                             <span class="text-slate-400">① 순수 땅값 (대지지분 가치, $L$)</span>
                             <span id="ledger-land-val" class="font-bold text-slate-200 font-mono">0.0 억원</span>
@@ -359,68 +417,128 @@
                         </div>
                     </div>
                 </div>
-            </div>
 
-            <!-- ✨ Gemini AI Diagnostic Card -->
-            <div class="p-6 rounded-2xl glass-panel shadow-2xl relative border border-slate-800/60 overflow-hidden">
-                <div class="absolute -left-12 -bottom-12 w-48 h-48 bg-indigo-500/5 rounded-full blur-3xl"></div>
-                
-                <div class="border-b border-slate-800/80 pb-3 flex justify-between items-center mb-4">
-                    <h2 class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-purple-400 to-emerald-400 flex items-center gap-2 select-none">
-                        <i class="fa-solid fa-wand-magic-sparkles text-purple-400"></i> ✨ Gemini AI 종합 입지 분석 소장
-                    </h2>
-                </div>
-                
-                <p class="text-xs text-slate-400 leading-relaxed mb-4">
-                    현재 시뮬레이터에 장착된 개별 부동산 변수와 호가 가치 괴리($\alpha$)를 최신 검색 모델(Google Grounding)과 연동하여 정밀 입지 밸류에이션 리포트를 출력합니다.
-                </p>
-
-                <div class="flex flex-col gap-4">
-                    <!-- Fetch Action -->
-                    <button id="btn-generate-ai" class="w-full bg-gradient-to-r from-purple-600 via-indigo-600 to-emerald-600 hover:from-purple-500 hover:via-indigo-500 hover:to-emerald-500 text-white py-3 rounded-xl font-extrabold text-xs tracking-wider transition duration-300 shadow-lg shadow-purple-600/20 active:scale-95 flex items-center justify-center gap-2">
-                        <i class="fa-solid fa-wand-magic-sparkles"></i> <span>✨ AI 종합 입지·전망 리포트 생성</span>
-                    </button>
-
-                    <!-- Loading State -->
-                    <div id="ai-loading" class="hidden flex flex-col items-center justify-center py-8 gap-4 bg-slate-955/40 border border-slate-850 rounded-xl">
-                        <div class="relative flex items-center justify-center">
-                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
-                            <i class="fa-solid fa-wand-magic-sparkles text-purple-400 absolute text-sm animate-ping"></i>
-                        </div>
-                        <div class="text-center">
-                            <span id="ai-loading-status" class="text-xs font-bold text-indigo-300 animate-pulse">실시간 시장 정보 검색 중...</span>
-                            <p class="text-[10px] text-slate-500 mt-1">약 5~10초의 자산 해석 및 입지 연산 시간이 소요됩니다.</p>
-                        </div>
-                    </div>
-
-                    <!-- AI Report Output Area -->
-                    <div id="ai-report-area" class="hidden flex flex-col gap-4 bg-slate-955/80 p-5 rounded-xl border border-slate-850 max-h-[500px] overflow-y-auto">
-                        <div class="flex justify-between items-center border-b border-slate-850 pb-2">
-                            <span class="text-xs font-bold text-emerald-400 flex items-center gap-1.5 select-none">
-                                <i class="fa-solid fa-file-invoice-dollar animate-pulse"></i> Gemini AI 자산 종합 분석서
-                            </span>
-                            <button id="btn-copy-ai" class="text-[10px] bg-slate-900 hover:bg-slate-800 text-slate-300 px-2.5 py-1 rounded border border-slate-800 transition flex items-center gap-1">
-                                <i class="fa-solid fa-copy"></i> 복사하기
-                            </button>
-                        </div>
-                        
-                        <!-- Formatted Report Output -->
-                        <div id="ai-report-output" class="text-xs text-slate-300 leading-relaxed flex flex-col gap-2">
-                            <!-- Filled dynamically -->
-                        </div>
-
-                        <!-- Grounding Citations -->
-                        <div id="ai-citations-area" class="hidden flex flex-col gap-2 border-t border-slate-850 pt-3 mt-2">
-                            <span class="text-[10px] font-bold text-slate-500"><i class="fa-solid fa-globe"></i> 최신 시장 교차 검증 출처 (Google Grounding)</span>
-                            <div id="ai-citations-list" class="flex flex-wrap gap-2">
-                                <!-- Injected dynamically -->
-                            </div>
-                        </div>
+                <!-- Diagnostic text area -->
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 shadow-lg mt-4">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-1.5 border-b border-slate-800 pb-3">
+                        <i class="fa-solid fa-file-invoice-dollar text-emerald-500"></i> 서울·경기 아파트 시장 가치 정밀 감정 리포트
+                    </h4>
+                    <div id="reportText" class="text-sm leading-relaxed text-slate-300 space-y-4">
+                        <!-- Generated Dynamically -->
                     </div>
                 </div>
             </div>
         </section>
     </main>
+
+    <!-- 📦 STREAMING_CHUNK: Bulk Data Manager UI section -->
+    <!-- New Section: Bulk Data Manager & AI Collector -->
+    <section class="max-w-7xl w-full mx-auto px-4 md:px-8 mt-12">
+        <div class="p-6 rounded-2xl glass-panel shadow-2xl flex flex-col gap-6 border border-slate-800/60">
+            <div class="border-b border-slate-800 pb-3 flex justify-between items-center">
+                <h2 class="text-lg font-bold text-purple-300 flex items-center gap-2 select-none">
+                    <i class="fa-solid fa-cubes text-purple-400 animate-pulse"></i> 📦 대량 데이터 관리자 (Bulk Loader & AI Engine)
+                </h2>
+                <span class="text-xs text-slate-400 font-medium">Excel/CSV 일괄 기입 및 Gemini AI 스페이스 연계</span>
+            </div>
+
+            <!-- Tab Buttons -->
+            <div class="flex border-b border-slate-800 gap-2">
+                <button id="tab-btn-excel" class="px-4 py-2 text-xs font-bold text-indigo-400 border-b-2 border-indigo-500 outline-none">
+                    <i class="fa-solid fa-file-excel mr-1"></i> Excel/CSV 일괄 업로드
+                </button>
+                <button id="tab-btn-ai-bulk" class="px-4 py-2 text-xs font-bold text-slate-400 hover:text-slate-200 outline-none">
+                    <i class="fa-solid fa-wand-magic-sparkles mr-1 text-purple-400"></i> ✨ AI 벌크 단지 수집기
+                </button>
+            </div>
+
+            <!-- Tab Content 1: Excel Import -->
+            <div id="tab-content-excel" class="flex flex-col gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+                    <div class="flex flex-col gap-2.5">
+                        <h4 class="text-xs font-extrabold text-slate-300">엑셀/CSV 일괄 매핑 규칙</h4>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            다운로드한 규격 템플릿에 따라 데이터를 알맞게 입력한 뒤 업로드해 주세요. 행정구역(도_시, 구_시_군, 상세지역_동)은 우리가 탑재한 3단계 Cascading 명칭과 일치해야 오차 없는 다차원 비교 정렬이 완벽하게 가동됩니다.
+                        </p>
+                        <button onclick="downloadExcelTemplate()" class="w-fit text-xs bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 px-4 py-2.5 rounded-lg font-bold flex items-center gap-1.5 transition">
+                            <i class="fa-solid fa-file-csv text-indigo-400"></i> 임포트용 표준 CSV 템플릿 다운로드
+                        </button>
+                    </div>
+
+                    <!-- Drag & Drop Zone -->
+                    <div id="drop-zone" class="border-2 border-dashed border-slate-800 hover:border-indigo-500/40 bg-slate-950/40 p-8 rounded-xl flex flex-col items-center justify-center text-center cursor-pointer transition select-none">
+                        <i class="fa-solid fa-cloud-arrow-up text-3xl text-indigo-400 mb-3 animate-bounce"></i>
+                        <span class="text-xs font-bold text-slate-200 block">여기로 Excel 또는 CSV 파일 드래그 & 드롭</span>
+                        <span class="text-[10px] text-slate-500 mt-1 block">또는 내 컴퓨터의 파일 직접 찾기</span>
+                        <input type="file" id="bulk-file-input" accept=".xlsx, .xls, .csv" class="hidden">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content 2: AI Bulk Search -->
+            <div id="tab-content-ai-bulk" class="hidden flex flex-col gap-4">
+                <div class="flex flex-col gap-2.5">
+                    <h4 class="text-xs font-extrabold text-slate-300">구글 실시간 검색 기반 AI 일괄 스펙 수집기</h4>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        탐색하고 싶은 아파트 이름을 줄바꿈(엔터) 또는 쉼표로 나열한 뒤 수집을 시작해 주세요. 제미나이 AI가 웹 전체를 실시간 크롤링하여 평균 대지지분, 준공 연도, 총 세대수, 호가 등을 자동으로 정형화해 추출해 옵니다. (🔑 API 키 필요)
+                    </p>
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <textarea id="ai-bulk-textarea" placeholder="자양 하늘채&#10;마포 래미안 푸르지오&#10;목동신시가지 7단지" class="flex-1 min-h-[120px] bg-slate-950 border border-slate-850 p-4 rounded-xl text-xs focus:outline-none focus:border-purple-500 text-slate-200 font-mono tracking-wide leading-relaxed placeholder-slate-700"></textarea>
+                        <div class="flex flex-col gap-2 justify-center">
+                            <button id="btn-run-ai-bulk" class="bg-gradient-to-r from-purple-600 via-indigo-600 to-sky-600 hover:from-purple-500 hover:via-indigo-500 hover:to-sky-500 text-white font-black text-xs px-6 py-3 rounded-xl transition duration-300 shadow-lg shadow-indigo-600/10 active:scale-95 flex items-center justify-center gap-1.5 min-w-[200px]">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> ✨ AI 벌크 스펙 일괄 수집
+                            </button>
+                            <!-- Bulk loader spinner -->
+                            <div id="ai-bulk-loading" class="hidden flex items-center justify-center gap-2 bg-slate-950/60 border border-slate-850 p-3 rounded-xl">
+                                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-purple-500"></div>
+                                <span class="text-[10px] font-extrabold text-purple-400 animate-pulse">실시간 수치 분석 중...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Matrix Area (Only visible when parsed data is loaded) -->
+            <div id="bulk-preview-area" class="hidden border-t border-slate-800/80 pt-6 flex flex-col gap-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-black text-indigo-300 flex items-center gap-1.5">
+                        <i class="fa-solid fa-list-check"></i> 데이터 업로드 후보군 미리보기 (<span id="bulk-preview-count">0</span>건)
+                    </span>
+                    <div class="flex gap-2">
+                        <button id="btn-clear-preview" class="text-xs bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-slate-200 px-3.5 py-2 rounded-lg border border-slate-700 transition">
+                            초기화
+                        </button>
+                        <button id="btn-commit-bulk" class="text-xs bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white px-5 py-2 rounded-lg font-bold shadow-lg shadow-emerald-600/10 transition flex items-center gap-1">
+                            <i class="fa-solid fa-cloud-arrow-up"></i> 위 목록 데이터베이스 일괄 업로드
+                        </button>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto border border-slate-850 rounded-xl bg-slate-950/60">
+                    <table class="w-full text-left text-[11px]">
+                        <thead>
+                            <tr class="bg-slate-900 border-b border-slate-850 text-slate-400 font-bold">
+                                <th class="py-2.5 px-3">도/시</th>
+                                <th class="py-2.5 px-3">구/시/군</th>
+                                <th class="py-2.5 px-3">상세(동)</th>
+                                <th class="py-2.5 px-3">단지명</th>
+                                <th class="py-2.5 px-3 text-right">대지지분</th>
+                                <th class="py-2.5 px-3 text-right">공급평수</th>
+                                <th class="py-2.5 px-3 text-right">연식</th>
+                                <th class="py-2.5 px-3 text-right">세대수</th>
+                                <th class="py-2.5 px-3 text-right">호가(억)</th>
+                                <th class="py-2.5 px-3 text-right">이론가</th>
+                                <th class="py-2.5 px-3 text-center">진단</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bulk-preview-tbody" class="divide-y divide-slate-850 text-slate-300">
+                            <!-- Injected dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </section>
 
     <!-- Main Comparison Grid Table -->
     <section class="max-w-7xl w-full mx-auto px-4 md:px-8 mt-12">
@@ -441,7 +559,7 @@
             </div>
 
             <!-- Table Container -->
-            <div class="overflow-x-auto w-full border border-slate-850 rounded-xl bg-slate-950/40">
+            <div class="overflow-x-auto w-full border border-slate-855 rounded-xl bg-slate-950/40">
                 <table class="w-full text-left text-xs border-collapse">
                     <thead>
                         <tr class="bg-slate-955/90 text-slate-400 font-semibold uppercase border-b border-slate-850 select-none">
@@ -452,8 +570,8 @@
                             <th class="py-3 px-4 cursor-pointer hover:bg-slate-900 transition text-right" onclick="sortTable('households')">세대수 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-40"></i></th>
                             <th class="py-3 px-4 cursor-pointer hover:bg-slate-900 transition text-right" onclick="sortTable('age')">연식 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-40"></i></th>
                             <th class="py-3 px-4 cursor-pointer hover:bg-slate-900 transition text-right" onclick="sortTable('landArea')">보유지분 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-40"></i></th>
-                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-900 transition text-right" onclick="sortTable('modelValue')">이론내재가 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-40"></i></th>
-                            <th class="py-3 px-4 cursor-pointer hover:bg-slate-900 transition text-right" onclick="sortTable('marketPrice')">시장호가 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-40"></i></th>
+                            <th class="py-3 px-4 text-right cursor-pointer hover:bg-slate-900 transition" onclick="sortTable('modelValue')">이론내재가 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-40"></i></th>
+                            <th class="py-3 px-4 text-right cursor-pointer hover:bg-slate-900 transition" onclick="sortTable('marketPrice')">시장호가 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-40"></i></th>
                             <th class="py-3 px-4 cursor-pointer hover:bg-slate-900 transition text-center" onclick="sortTable('alphaPercent')">알파비율 <i class="fa-solid fa-sort text-[10px] ml-1 opacity-40"></i></th>
                             <th class="py-3 px-4 text-center">동작</th>
                         </tr>
@@ -478,7 +596,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-8 my-4">
                 <!-- Formula Cards -->
-                <div class="bg-slate-955/60 border border-slate-850 p-6 rounded-xl flex flex-col gap-4">
+                <div class="bg-slate-950/60 border border-slate-850 p-6 rounded-xl flex flex-col gap-4">
                     <span class="text-xs text-indigo-400 font-extrabold tracking-wider uppercase">대표 통합 밸류에이션 수식</span>
                     <div class="text-center bg-slate-950 p-4 rounded-lg border border-slate-850 font-mono text-base text-emerald-400">
                         $$V = \big[ \text{땅값}(L) + \text{건물값}(B) \big] \times P_m + \alpha$$
@@ -492,11 +610,11 @@
                     </ul>
                 </div>
 
-                <div class="bg-slate-955/60 border border-slate-850 p-6 rounded-xl flex flex-col gap-4">
+                <div class="bg-slate-950/60 border border-slate-850 p-6 rounded-xl flex flex-col gap-4">
                     <span class="text-xs text-indigo-400 font-extrabold tracking-wider uppercase">보정 필터 및 디테일 공식</span>
                     <div class="flex flex-col gap-4">
                         <div>
-                            <span class="text-xs text-slate-300 block mb-1">① 계약면적 환산 및 연식 감가상각 수식 ($B$)</span>
+                            <span class="text-xs text-slate-300 block mb-1">① 계약면적 및 감가상각 하방 보정 모델 ($B$)</span>
                             <div class="bg-slate-950 p-2.5 rounded text-center text-xs text-amber-400 font-mono">
                                 $$B = \text{공급평수} \times 1.4 \times \text{건축비} \times \left( 1 - 0.8 \times \frac{\text{경과연수}}{40} \right)$$
                             </div>
@@ -514,7 +632,7 @@
     </section>
 
     <!-- Custom History Log Modal Overlay -->
-    <div id="modal-history" class="fixed inset-0 bg-slate-950/80 z-50 flex items-center justify-center p-4 hidden">
+    <div id="modal-history" class="fixed inset-0 bg-slate-955/80 z-50 flex items-center justify-center p-4 hidden">
         <div class="max-w-3xl w-full bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
             <div class="p-5 border-b border-slate-800 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-slate-200 flex items-center gap-2">
@@ -528,14 +646,14 @@
             <div class="p-6 overflow-y-auto flex flex-col gap-4" id="history-logs-container">
                 <!-- Log Card nodes injected here -->
             </div>
-            <div class="p-4 bg-slate-950/40 border-t border-slate-800/80 text-center text-[10px] text-slate-500">
+            <div class="p-4 bg-slate-955/40 border-t border-slate-800/80 text-center text-[10px] text-slate-500">
                 중요: '복구' 수행 시 해당 캡처 시점의 모든 물리적 변수 스냅샷이 실거래 매트릭스로 재등록 및 복원됩니다.
             </div>
         </div>
     </div>
 
     <!-- Custom Confirm Modal Overlay (No Alert / Confirm Rule) -->
-    <div id="modal-confirm" class="fixed inset-0 bg-slate-950/90 z-[60] flex items-center justify-center p-4 hidden">
+    <div id="modal-confirm" class="fixed inset-0 bg-slate-955/90 z-[60] flex items-center justify-center p-4 hidden">
         <div class="max-w-md w-full bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-2xl flex flex-col gap-4">
             <div class="flex items-center gap-3 text-amber-400">
                 <i class="fa-solid fa-circle-exclamation text-2xl"></i>
@@ -544,13 +662,13 @@
             <p class="text-sm text-slate-400 leading-relaxed" id="confirm-body">정말로 이 작업을 진행하시겠습니까?</p>
             <div class="flex justify-end gap-2.5 mt-2">
                 <button id="confirm-btn-cancel" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold rounded-lg border border-slate-700 transition">취소</button>
-                <button id="confirm-btn-ok" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-md shadow-indigo-600/10 transition">진행</button>
+                <button id="confirm-btn-ok" class="px-5 py-2 bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold rounded-lg shadow-md transition">진행</button>
             </div>
         </div>
     </div>
 
     <!-- 🔑 Custom API Config Modal Overlay -->
-    <div id="modal-api-config" class="fixed inset-0 bg-slate-950/95 z-[60] flex items-center justify-center p-4 hidden">
+    <div id="modal-api-config" class="fixed inset-0 bg-slate-955/95 z-[60] flex items-center justify-center p-4 hidden">
         <div class="max-w-md w-full bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-2xl flex flex-col gap-4">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 class="text-base font-bold text-slate-200 flex items-center gap-2">
@@ -636,51 +754,82 @@
         let logsCollection = null;
         let useFirebase = false;
 
-        // Dynamic 2-Tier Cascading Location Mappings with specific sub-regions bundled in parentheses
+        // Dynamic 3-Tier Cascading Location Mappings
         const districtMap = {
-            "서울특별시": [
-                "강남구 (대치)", "서초구 (반포)", "송파구 (잠실)", "마포구 (아현)", "성동구 (성수)", "용산구 (이촌)", 
-                "양천구 (목동)", "동대문구 (용두)", "종로구 (교남)", "노원구 (상계)", "중랑구 (신내)", "강동구 (고덕)", 
-                "도봉구 (창동)", "구로구 (신도림)", "서대문구 (남가좌)", "영등포구 (여의도)", "동작구 (흑석)", "광진구 (광장)", 
-                "강서구 (마곡)", "성북구 (길음)", "은평구 (수색)"
-            ],
-            "경기도": [
-                "성남시 분당구 (판교)", "성남시 분당구 (서현)", "수원시 영통구 (광교)", "화성시 (동탄)", "안양시 동안구 (평촌)", 
-                "고양시 일산서구 (강선)", "고양시 덕양구 (삼송)", "부천시 (중동)", "광명시 (철산)", "하남시 (미사)", 
-                "남양주시 (다산)", "시흥시 (배곧)", "김포시 (한강신도시)", "의왕시 (포일)"
-            ],
-            "인천광역시": [
-                "연수구 (송도)", "서구 (청라)", "서구 (검단)", "부평구 (부평)", "남동구 (구월)", "중구 (영종)"
-            ]
+            "서울특별시": {
+                "강남구": ["대치동", "역삼동", "개포동", "압구정동", "삼성동", "청담동"],
+                "서초구": ["반포동", "방배동", "서초동", "잠원동", "우면동"],
+                "송파구": ["잠실동", "가락동", "신천동", "문정동", "방이동", "풍납동"],
+                "마포구": ["아현동", "공덕동", "용강동", "염리동", "상암동", "망원동"],
+                "성동구": ["성수동", "옥수동", "금호동", "하왕십리동", "행당동"],
+                "용산구": ["이촌동", "한남동", "한강로동", "신계동", "서빙고동"],
+                "양천구": ["목동", "신정동", "신월동"],
+                "동대문구": ["용두동", "답십리동", "전농동", "장안동", "제기동"],
+                "종로구": ["교남동", "사직동", "혜화동", "평창동", "숭인동"],
+                "노원구": ["상계동", "중계동", "하계동", "월계동", "공릉동"],
+                "중랑구": ["신내동", "면목동", "상봉동", "중화동", "묵동"],
+                "강동구": ["고덕동", "상일동", "둔촌동", "명일동", "천호동", "암사동"],
+                "도봉구": ["창동", "방학동", "쌍문동", "도봉동"],
+                "구로구": ["신도림동", "구로동", "개봉동", "온수동"],
+                "서대문구": ["남가좌동", "북가좌동", "홍제동", "연희동", "홍은동"],
+                "영등포구": ["여의도동", "당산동", "신길동", "문래동", "대림동"],
+                "동작구": ["흑석동", "노량진동", "사당동", "상도동", "대방동"],
+                "광진구": ["광장동", "자양동", "구의동", "중곡동", "화양동"],
+                "강서구": ["마곡동", "화곡동", "가양동", "등촌동", "방화동"],
+                "성북구": ["길음동", "종암동", "돈암동", "장위동", "정릉동"],
+                "은평구": ["수색동", "불광동", "갈현동", "녹번동", "응암동"]
+            },
+            "경기도": {
+                "성남시 분당구": ["판교동", "서현동", "야탑동", "이매동", "삼평동", "정자동", "금곡동"],
+                "수원시 영통구": ["광교동", "원천동", "영통동", "망포동", "매탄동", "하동"],
+                "화성시": ["동탄동", "반송동", "영천동", "향남읍", "봉담읍", "남양읍", "오산동"],
+                "안양시 동안구": ["평촌동", "관양동", "호계동", "비산동", "갈산동"],
+                "고양시 일산서구": ["대화동", "주엽동", "일산동", "탄현동", "덕이동"],
+                "고양시 덕양구": ["삼송동", "화정동", "행신동", "원흥동", "지축동"],
+                "부천시": ["중동", "상동", "소사동", "심곡동", "약대동"],
+                "광명시": ["철산동", "하안동", "소하동", "일직동", "광명동"],
+                "하남시": ["망월동 (미사)", "신장동", "덕풍동", "감일동", "풍산동"],
+                "남양주시": ["다산동", "별내동", "와부읍", "진접읍", "퇴계원읍"],
+                "시흥시": ["배곳동", "정왕동", "대야동", "은행동", "목감동"],
+                "김포시": ["장기동 (한강)", "구래동", "운양동", "풍무동", "사우동"],
+                "의왕시": ["포일동", "내손동", "삼동", "오전동", "학의동"]
+            },
+            "인천광역시": {
+                "연수구": ["송도동", "동춘동", "연수동", "옥련동"],
+                "서구": ["청라동", "검단동", "당하동", "연희동", "가좌동", "원당동"],
+                "부평구": ["부평동", "산곡동", "삼산동", "갈산동", "십정동"],
+                "남동구": ["구월동", "간석동", "만수동", "논현동", "서창동"],
+                "중구": ["영종동", "운서동", "신흥동", "연안동", "중산동"]
+            }
         };
 
-        // Static Pre-populated Core Presets mapped exactly to the new consolidated format
+        // Static Pre-populated Core Presets mapped exactly to 3-tier locations
         const staticPresets = [
-            { id: "static-1", author: "밸류마스터", region: "서울특별시", district: "서초구 (반포)", name: "아크로리버파크", sizeType: "34평 (84타입)", landArea: 11.5, supplySize: 34, constructionPrice: 1000, buildingAge: 10, villaLandPrice: 12000, households: 1612, marketPrice: 44 },
-            { id: "static-2", author: "재건축대장", region: "서울특별시", district: "강남구 (대치)", name: "은마아파트", sizeType: "31평 (76타입)", landArea: 14.6, supplySize: 31, constructionPrice: 1000, buildingAge: 47, villaLandPrice: 11000, households: 4424, marketPrice: 24.5 },
-            { id: "static-3", author: "메가타운러", region: "서울특별시", district: "송파구 (잠실)", name: "헬리오시티", sizeType: "33평 (84타입)", landArea: 12.1, supplySize: 33, constructionPrice: 1000, buildingAge: 8, villaLandPrice: 8000, households: 9510, marketPrice: 21.5 },
-            { id: "static-4", author: "마프아재", region: "서울특별시", district: "마포구 (아현)", name: "마포래미안푸르지오", sizeType: "34평 (84타입)", landArea: 12.5, supplySize: 34, constructionPrice: 1000, buildingAge: 12, villaLandPrice: 6500, households: 3885, marketPrice: 18.5 },
-            { id: "static-5", author: "고찰리더", region: "서울특별시", district: "동대문구 (용두)", name: "래미안위브", sizeType: "34평 (84타입)", landArea: 11.8, supplySize: 34, constructionPrice: 1000, buildingAge: 12, villaLandPrice: 4500, households: 2652, marketPrice: 11.5 },
-            { id: "static-6", author: "목동연구원", region: "서울특별시", district: "양천구 (목동)", name: "목동신시가지 7단지", sizeType: "27평 (66타입)", landArea: 19.5, supplySize: 27, constructionPrice: 1000, buildingAge: 40, villaLandPrice: 6800, households: 2550, marketPrice: 20 },
-            { id: "static-7", author: "성수강변", region: "서울특별시", district: "성동구 (성수)", name: "트리마제", sizeType: "38평 (84타입)", landArea: 6.5, supplySize: 38, constructionPrice: 1500, buildingAge: 9, villaLandPrice: 9000, households: 688, marketPrice: 38 },
-            { id: "static-8", author: "사대문파", region: "서울특별시", district: "종로구 (교남)", name: "경희궁자이", sizeType: "34평 (84타입)", landArea: 11.2, supplySize: 34, constructionPrice: 1000, buildingAge: 9, villaLandPrice: 6000, households: 1148, marketPrice: 19.8 },
-            { id: "static-9", author: "상계대지지분", region: "서울특별시", district: "노원구 (상계)", name: "상계주공 7단지", sizeType: "24평 (59타입)", landArea: 15.2, supplySize: 24, constructionPrice: 1000, buildingAge: 38, villaLandPrice: 3000, households: 2634, marketPrice: 6.5 },
-            { id: "static-10", author: "가성비주거", region: "서울특별시", district: "중랑구 (신내)", name: "신내 데시앙", sizeType: "33평 (84타입)", landArea: 13.5, supplySize: 33, constructionPrice: 1000, buildingAge: 16, villaLandPrice: 2800, households: 1326, marketPrice: 6.8 },
-            { id: "static-11", author: "일산올드보이", region: "경기도", district: "고양시 일산서구 (강선)", name: "강선마을14단지 두산", sizeType: "31평 (84타입)", landArea: 15.5, supplySize: 31, constructionPrice: 1000, buildingAge: 33, villaLandPrice: 2200, households: 792, marketPrice: 5.6 },
-            { id: "static-12", author: "판교테크", region: "경기도", district: "성남시 분당구 (판교)", name: "봇들마을8단지", sizeType: "34평 (84타입)", landArea: 16.2, supplySize: 34, constructionPrice: 1000, buildingAge: 17, villaLandPrice: 7500, households: 462, marketPrice: 20 },
-            { id: "static-13", author: "서현선도", region: "경기도", district: "성남시 분당구 (서현)", name: "시범한양", sizeType: "32평 (84타입)", landArea: 15.8, supplySize: 32, constructionPrice: 1000, buildingAge: 35, villaLandPrice: 5000, households: 2419, marketPrice: 14.8 },
-            { id: "static-14", author: "광교주민", region: "경기도", district: "수원시 영통구 (광교)", name: "광교중흥S-클래스", sizeType: "35평 (84타입)", landArea: 9.8, supplySize: 35, constructionPrice: 1000, buildingAge: 7, villaLandPrice: 4500, households: 2231, marketPrice: 14.2 },
-            { id: "static-15", author: "동탄실수요", region: "경기도", district: "화성시 (동탄)", name: "시범다은포스코더샵", sizeType: "33평 (84타입)", landArea: 14.5, supplySize: 33, constructionPrice: 1000, buildingAge: 19, villaLandPrice: 2600, households: 514, marketPrice: 7.2 },
-            { id: "static-16", author: "송도클래스", region: "인천광역시", district: "연수구 (송도)", name: "송도 더샵퍼스트파크", sizeType: "35평 (84타입)", landArea: 11.2, supplySize: 35, constructionPrice: 1000, buildingAge: 9, villaLandPrice: 2800, households: 856, marketPrice: 8.8 },
-            { id: "static-17", author: "반포토지주", region: "서울특별시", district: "서초구 (반포)", name: "반포자이", sizeType: "35평 (84타입)", landArea: 10.9, supplySize: 35, constructionPrice: 1000, buildingAge: 17, villaLandPrice: 10500, households: 3410, marketPrice: 38.5 },
-            { id: "static-18", author: "서대문센트럴", region: "서울특별시", district: "서대문구 (남가좌)", name: "DMC파크뷰자이 1단지", sizeType: "34평 (84타입)", landArea: 12.3, supplySize: 34, constructionPrice: 1000, buildingAge: 11, villaLandPrice: 3800, households: 4300, marketPrice: 11.8 },
-            { id: "static-19", author: "구로리딩", region: "서울특별시", district: "구로구 (신도림)", name: "신도림 태영타운", sizeType: "32평 (84타입)", landArea: 8.8, supplySize: 32, constructionPrice: 1000, buildingAge: 26, villaLandPrice: 3500, households: 1252, marketPrice: 10.2 },
-            { id: "static-20", author: "안양평촌", region: "경기도", district: "안양시 동안구 (평촌)", name: "목련선경 2단지", sizeType: "24평 (58타입)", landArea: 13.8, supplySize: 24, constructionPrice: 1000, buildingAge: 34, villaLandPrice: 3800, households: 994, marketPrice: 9.3 },
-            { id: "static-21", author: "고덕그라", region: "서울특별시", district: "강동구 (고덕)", name: "고덕그라시움", sizeType: "34평 (84타입)", landArea: 10.5, supplySize: 34, constructionPrice: 1000, buildingAge: 7, villaLandPrice: 5000, households: 4932, marketPrice: 16.5 },
-            { id: "static-22", author: "용산가치러", region: "서울특별시", district: "용산구 (이촌)", name: "한강맨션", sizeType: "27평 (87타입)", landArea: 23.5, supplySize: 27, constructionPrice: 1000, buildingAge: 55, villaLandPrice: 13000, households: 660, marketPrice: 42.5 },
-            { id: "static-23", author: "이촌수요자", region: "서울특별시", district: "용산구 (이촌)", name: "한강대우", sizeType: "33평 (84타입)", landArea: 7.2, supplySize: 33, constructionPrice: 1000, buildingAge: 26, villaLandPrice: 8500, households: 834, marketPrice: 19.5 },
-            { id: "static-24", author: "창동개발", region: "서울특별시", district: "도봉구 (창동)", name: "창동 동아", sizeType: "32평 (84타입)", landArea: 13.1, supplySize: 32, constructionPrice: 1000, buildingAge: 38, villaLandPrice: 2800, households: 600, marketPrice: 7.2 },
-            { id: "static-25", author: "송도리딩", region: "인천광역시", district: "연수구 (송도)", name: "송도센트럴파크푸르지오", sizeType: "35평 (84타입)", landArea: 9.5, supplySize: 35, constructionPrice: 1200, buildingAge: 11, villaLandPrice: 3000, households: 551, marketPrice: 9.5 }
+            { id: "static-1", author: "밸류마스터", region: "서울특별시", district: "서초구", subDistrict: "반포동", name: "아크로리버파크", sizeType: "34평 (84타입)", landArea: 11.5, supplySize: 34, constructionPrice: 1000, buildingAge: 10, villaLandPrice: 12000, households: 1612, marketPrice: 44 },
+            { id: "static-2", author: "재건축대장", region: "서울특별시", district: "강남구", subDistrict: "대치동", name: "은마아파트", sizeType: "31평 (76타입)", landArea: 14.6, supplySize: 31, constructionPrice: 1000, buildingAge: 47, villaLandPrice: 11000, households: 4424, marketPrice: 24.5 },
+            { id: "static-3", author: "메가타운러", region: "서울특별시", district: "송파구", subDistrict: "잠실동", name: "헬리오시티", sizeType: "33평 (84타입)", landArea: 12.1, supplySize: 33, constructionPrice: 1000, buildingAge: 8, villaLandPrice: 8000, households: 9510, marketPrice: 21.5 },
+            { id: "static-4", author: "마프아재", region: "서울특별시", district: "마포구", subDistrict: "아현동", name: "마포래미안푸르지오", sizeType: "34평 (84타입)", landArea: 12.5, supplySize: 34, constructionPrice: 1000, buildingAge: 12, villaLandPrice: 6500, households: 3885, marketPrice: 18.5 },
+            { id: "static-5", author: "고찰리더", region: "서울특별시", district: "동대문구", subDistrict: "용두동", name: "래미안위브", sizeType: "34평 (84타입)", landArea: 11.8, supplySize: 34, constructionPrice: 1000, buildingAge: 12, villaLandPrice: 4500, households: 2652, marketPrice: 11.5 },
+            { id: "static-6", author: "목동연구원", region: "서울특별시", district: "양천구", subDistrict: "목동", name: "목동신시가지 7단지", sizeType: "27평 (66타입)", landArea: 19.5, supplySize: 27, constructionPrice: 1000, buildingAge: 40, villaLandPrice: 6800, households: 2550, marketPrice: 20 },
+            { id: "static-7", author: "성수강변", region: "서울특별시", district: "성동구", subDistrict: "성수동", name: "트리마제", sizeType: "38평 (84타입)", landArea: 6.5, supplySize: 38, constructionPrice: 1500, buildingAge: 9, villaLandPrice: 9000, households: 688, marketPrice: 38 },
+            { id: "static-8", author: "사대문파", region: "서울특별시", district: "종로구", subDistrict: "교남동", name: "경희궁자이", sizeType: "34평 (84타입)", landArea: 11.2, supplySize: 34, constructionPrice: 1000, buildingAge: 9, villaLandPrice: 6000, households: 1148, marketPrice: 19.8 },
+            { id: "static-9", author: "상계대지지분", region: "서울특별시", district: "노원구", subDistrict: "상계동", name: "상계주공 7단지", sizeType: "24평 (59타입)", landArea: 15.2, supplySize: 24, constructionPrice: 1000, buildingAge: 38, villaLandPrice: 3000, households: 2634, marketPrice: 6.5 },
+            { id: "static-10", author: "가성비주거", region: "서울특별시", district: "중랑구", subDistrict: "신내동", name: "신내 데시앙", sizeType: "33평 (84타입)", landArea: 13.5, supplySize: 33, constructionPrice: 1000, buildingAge: 16, villaLandPrice: 2800, households: 1326, marketPrice: 6.8 },
+            { id: "static-11", author: "일산올드보이", region: "경기도", district: "고양시 일산서구", subDistrict: "주엽동", name: "강선마을14단지 두산", sizeType: "31평 (84타입)", landArea: 15.5, supplySize: 31, constructionPrice: 1000, buildingAge: 33, villaLandPrice: 2200, households: 792, marketPrice: 5.6 },
+            { id: "static-12", author: "판교테크", region: "경기도", district: "성남시 분당구", subDistrict: "삼평동", name: "봇들마을8단지", sizeType: "34평 (84타입)", landArea: 16.2, supplySize: 34, constructionPrice: 1000, buildingAge: 17, villaLandPrice: 7500, households: 462, marketPrice: 20 },
+            { id: "static-13", author: "서현선도", region: "경기도", district: "성남시 분당구", subDistrict: "서현동", name: "시범한양", sizeType: "32평 (84타입)", landArea: 15.8, supplySize: 32, constructionPrice: 1000, buildingAge: 35, villaLandPrice: 5000, households: 2419, marketPrice: 14.8 },
+            { id: "static-14", author: "광교주민", region: "경기도", district: "수원시 영통구", subDistrict: "원천동", name: "광교중흥S-클래스", sizeType: "35평 (84타입)", landArea: 9.8, supplySize: 35, constructionPrice: 1000, buildingAge: 7, villaLandPrice: 4500, households: 2231, marketPrice: 14.2 },
+            { id: "static-15", author: "동탄실수요", region: "경기도", district: "화성시", subDistrict: "반송동", name: "시범다은포스코더샵", sizeType: "33평 (84타입)", landArea: 14.5, supplySize: 33, constructionPrice: 1000, buildingAge: 19, villaLandPrice: 2600, households: 514, marketPrice: 7.2 },
+            { id: "static-16", author: "송도클래스", region: "인천광역시", district: "연수구", subDistrict: "송도동", name: "송도 더샵퍼스트파크", sizeType: "35평 (84타입)", landArea: 11.2, supplySize: 35, constructionPrice: 1000, buildingAge: 9, villaLandPrice: 2800, households: 856, marketPrice: 8.8 },
+            { id: "static-17", author: "반포토지주", region: "경기도", district: "서초구", subDistrict: "반포동", name: "반포자이", sizeType: "35평 (84타입)", landArea: 10.9, supplySize: 35, constructionPrice: 1000, buildingAge: 17, villaLandPrice: 10500, households: 3410, marketPrice: 38.5 },
+            { id: "static-18", author: "서대문센트럴", region: "서울특별시", district: "서대문구", subDistrict: "남가좌동", name: "DMC파크뷰자이 1단지", sizeType: "34평 (84타입)", landArea: 12.3, supplySize: 34, constructionPrice: 1000, buildingAge: 11, villaLandPrice: 3800, households: 4300, marketPrice: 11.8 },
+            { id: "static-19", author: "구로리딩", region: "서울특별시", district: "구로구", subDistrict: "신도림동", name: "신도림 태영타운", sizeType: "32평 (84타입)", landArea: 8.8, supplySize: 32, constructionPrice: 1000, buildingAge: 26, villaLandPrice: 3500, households: 1252, marketPrice: 10.2 },
+            { id: "static-20", author: "안양평촌", region: "경기도", district: "안양시 동안구", subDistrict: "호계동", name: "목련선경 2단지", sizeType: "24평 (58타입)", landArea: 13.8, supplySize: 24, constructionPrice: 1000, buildingAge: 34, villaLandPrice: 3800, households: 994, marketPrice: 9.3 },
+            { id: "static-21", author: "고덕그라", region: "서울특별시", district: "강동구", subDistrict: "고덕동", name: "고덕그라시움", sizeType: "34평 (84타입)", landArea: 10.5, supplySize: 34, constructionPrice: 1000, buildingAge: 7, villaLandPrice: 5000, households: 4932, marketPrice: 16.5 },
+            { id: "static-22", author: "용산가치러", region: "서울특별시", district: "용산구", subDistrict: "이촌동", name: "한강맨션", sizeType: "27평 (87타입)", landArea: 23.5, supplySize: 27, constructionPrice: 1000, buildingAge: 55, villaLandPrice: 13000, households: 660, marketPrice: 42.5 },
+            { id: "static-23", author: "이촌수요자", region: "서울특별시", district: "용산구", subDistrict: "이촌동", name: "한강대우", sizeType: "33평 (84타입)", landArea: 7.2, supplySize: 33, constructionPrice: 1000, buildingAge: 26, villaLandPrice: 8500, households: 834, marketPrice: 19.5 },
+            { id: "static-24", author: "창동개발", region: "서울특별시", district: "도봉구", subDistrict: "창동", name: "창동 동아", sizeType: "32평 (84타입)", landArea: 13.1, supplySize: 32, constructionPrice: 1000, buildingAge: 38, villaLandPrice: 2800, households: 600, marketPrice: 7.2 },
+            { id: "static-25", author: "송도리딩", region: "인천광역시", district: "연수구", subDistrict: "송도동", name: "송도센트럴파크푸르지오", sizeType: "35평 (84타입)", landArea: 9.5, supplySize: 35, constructionPrice: 1200, buildingAge: 11, villaLandPrice: 3000, households: 551, marketPrice: 9.5 }
         ];
 
         // Active State variables
@@ -690,10 +839,12 @@
         let currentSortKey = "alphaPercent";
         let currentSortOrder = "desc";
         let currentCalculation = null; // AI 연동을 위해 실시간 연산 기록 캐싱
+        let bulkPreviewData = []; // Excel or AI bulk parsed data container
 
         // DOM Elements
         const elRegion = document.getElementById("select-region");
         const elDistrict = document.getElementById("select-district");
+        const elSubDistrict = document.getElementById("select-sub-district");
         const elAptName = document.getElementById("input-apt-name");
         const elSizeType = document.getElementById("input-size-type");
         const elAuthor = document.getElementById("input-author");
@@ -763,33 +914,47 @@
         const btnCloseHistory = document.getElementById("btn-close-history");
         const historyLogsContainer = document.getElementById("history-logs-container");
 
-        // ✨ Gemini AI Dynamic Elements
-        const btnGenerateAI = document.getElementById("btn-generate-ai");
-        const elAILoading = document.getElementById("ai-loading");
-        const elAILoadingStatus = document.getElementById("ai-loading-status");
-        const elAIReportArea = document.getElementById("ai-report-area");
-        const elAIReportOutput = document.getElementById("ai-report-output");
-        const elAICitationsArea = document.getElementById("ai-citations-area");
-        const elAICitationsList = document.getElementById("ai-citations-list");
-        const btnCopyAI = document.getElementById("btn-copy-ai");
+        // 🛠️ Collapsible Advanced Weights Settings
+        const slideScaleWeight = document.getElementById("slide-scale-weight");
+        const slideContractRatio = document.getElementById("slide-contract-ratio");
+        const slideResidualFloor = document.getElementById("slide-residual-floor");
+        
+        const btnToggleAdvanced = document.getElementById("btn-toggle-advanced");
+        const advancedWeightsPanel = document.getElementById("advanced-weights-panel");
+        const iconToggleAdvanced = document.getElementById("icon-toggle-advanced");
 
-        // ✨ Gemini AI Autofill Elements
-        const btnAIAutofill = document.getElementById("btn-ai-autofill");
-        const btnAIAutofillText = document.getElementById("btn-ai-autofill-text");
+        // Bulk Manager Tabs and Inputs
+        const tabBtnExcel = document.getElementById("tab-btn-excel");
+        const tabBtnAiBulk = document.getElementById("tab-btn-ai-bulk");
+        const tabContentExcel = document.getElementById("tab-content-excel");
+        const tabContentAiBulk = document.getElementById("tab-content-ai-bulk");
+        
+        const dropZone = document.getElementById("drop-zone");
+        const bulkFileInput = document.getElementById("bulk-file-input");
+        const aiBulkTextarea = document.getElementById("ai-bulk-textarea");
+        const btnRunAiBulk = document.getElementById("btn-run-ai-bulk");
+        const aiBulkLoading = document.getElementById("ai-bulk-loading");
+        
+        const bulkPreviewArea = document.getElementById("bulk-preview-area");
+        const bulkPreviewCount = document.getElementById("bulk-preview-count");
+        const bulkPreviewTbody = document.getElementById("bulk-preview-tbody");
+        const btnClearPreview = document.getElementById("btn-clear-preview");
+        const btnCommitBulk = document.getElementById("btn-commit-bulk");
 
-        // 🔑 API Config Modal Elements
-        const btnApiConfig = document.getElementById("btn-api-config");
-        const modalApiConfig = document.getElementById("modal-api-config");
-        const btnCloseApiConfig = document.getElementById("btn-close-api-config");
-        const inputApiKey = document.getElementById("input-api-key");
-        const btnSaveApiKey = document.getElementById("btn-save-api-key");
-        const btnDeleteApiKey = document.getElementById("btn-delete-api-key");
-
-        const headerApiIcon = document.getElementById("header-api-icon");
-        const headerApiText = document.getElementById("header-api-text");
+        // Advanced weights collapsible panel trigger
+        btnToggleAdvanced.addEventListener("click", () => {
+            const isHidden = advancedWeightsPanel.classList.contains("hidden");
+            if (isHidden) {
+                advancedWeightsPanel.classList.remove("hidden");
+                iconToggleAdvanced.classList.add("rotate-180");
+            } else {
+                advancedWeightsPanel.classList.add("hidden");
+                iconToggleAdvanced.classList.remove("rotate-180");
+            }
+        });
 
         // 📡 Custom Toast Notifications
-        function showToast(message, type = "info") {
+        function showToast(message, type) {
             const container = document.getElementById("toast-container");
             if (!container) return;
             const toast = document.createElement("div");
@@ -804,11 +969,8 @@
                 icon = '<i class="fa-solid fa-triangle-exclamation text-rose-400"></i>';
             }
 
-            toast.className = `flex items-center gap-3 px-5 py-3.5 rounded-xl border shadow-2xl transition duration-300 transform translate-y-2 opacity-0 pointer-events-auto ${bgClass}`;
-            toast.innerHTML = `
-                ${icon}
-                <span class="text-xs font-semibold">${message}</span>
-            `;
+            toast.className = "flex items-center gap-3 px-5 py-3.5 rounded-xl border shadow-2xl transition duration-300 transform translate-y-2 opacity-0 pointer-events-auto " + bgClass;
+            toast.innerHTML = icon + '<span class="text-xs font-semibold">' + message + '</span>';
 
             container.appendChild(toast);
             
@@ -847,24 +1009,21 @@
         });
 
         // 📡 Debug Terminal logger
-        function writeDebugLog(message, isError = false) {
+        function writeDebugLog(message, isError) {
             const container = document.getElementById("debug-log-list");
             if (!container) return;
             const node = document.createElement("div");
             const now = new Date().toLocaleTimeString();
-            node.className = `flex gap-2 leading-relaxed ${isError ? 'text-rose-400' : 'text-slate-400'}`;
-            node.innerHTML = `
-                <span class="text-slate-600 shrink-0">[${now}]</span>
-                <span>${message}</span>
-            `;
+            node.className = "flex gap-2 leading-relaxed " + (isError ? "text-rose-400" : "text-slate-400");
+            node.innerHTML = '<span class="text-slate-600 shrink-0">[' + now + ']</span><span>' + message + '</span>';
             container.appendChild(node);
             container.scrollTop = container.scrollHeight;
         }
 
-        // Cascading 2-tier select population
+        // Cascading 3-tier select population
         function populateDistrictOptions() {
             const selectedRegion = elRegion.value;
-            const districts = districtMap[selectedRegion] || [];
+            const districts = Object.keys(districtMap[selectedRegion] || {});
             elDistrict.innerHTML = "";
             districts.forEach(d => {
                 const opt = document.createElement("option");
@@ -872,22 +1031,39 @@
                 opt.textContent = d;
                 elDistrict.appendChild(opt);
             });
+            populateSubDistrictOptions();
         }
-        elRegion.addEventListener("change", populateDistrictOptions);
 
-        // Core calculation formula
-        function calculateValuation(landArea, supplySize, constPrice, age, villaPrice, households, marketPrice) {
+        function populateSubDistrictOptions() {
+            const selectedRegion = elRegion.value;
+            const selectedDistrict = elDistrict.value;
+            const subDistricts = districtMap[selectedRegion]?.[selectedDistrict] || [];
+            elSubDistrict.innerHTML = "";
+            subDistricts.forEach(sd => {
+                const opt = document.createElement("option");
+                opt.value = sd;
+                opt.textContent = sd;
+                elSubDistrict.appendChild(opt);
+            });
+        }
+
+        elRegion.addEventListener("change", populateDistrictOptions);
+        elDistrict.addEventListener("change", populateSubDistrictOptions);
+
+        // Core calculation formula (Updated with Advanced Tuning Weights)
+        function calculateValuation(landArea, supplySize, constPrice, age, villaPrice, households, marketPrice, scaleWeight, contractRatio, residualFloor) {
             // L = Land Area * Villa Land Price
             const landVal = (landArea * villaPrice) / 10000;
 
-            // B = Supply Size * 1.4 * Contract Pyeong Price * Age Depreciation
-            const contractSize = supplySize * 1.4;
-            const ageFactor = 1 - 0.8 * Math.min(1, age / 40); // 20% residual value floor
+            // B = Supply Size * contractRatio * Contract Pyeong Price * Age Depreciation
+            const contractSize = supplySize * contractRatio;
+            const rawAgeFactor = 1 - 0.8 * Math.min(1, age / 40); // 20% residual value floor
+            const ageFactor = Math.max(residualFloor / 100, rawAgeFactor);
             const buildingVal = (contractSize * constPrice * ageFactor) / 10000;
 
-            // Pm = 1 + 0.35 * ln[(N/100)^2 + 1] / ln(401)
+            // Pm = 1 + scaleWeight * ln[(N/100)^2 + 1] / ln(401)
             const ratioSquare = Math.pow(households / 100, 2);
-            const premiumMul = 1 + 0.35 * (Math.log(ratioSquare + 1) / Math.log(401));
+            const premiumMul = 1 + scaleWeight * (Math.log(ratioSquare + 1) / Math.log(401));
 
             // V_model = (L + B) * Pm
             const modelVal = (landVal + buildingVal) * premiumMul;
@@ -908,6 +1084,68 @@
             };
         }
 
+        // Generate Human-Readable Real Estate Analysis (Updated dynamically)
+        function generateReport(supply, land, age, households, L, B, Pm, calcVal, alpha, marketPrice, contractRatio, residualFloor) {
+            const mPriceBillion = marketPrice.toFixed(2);
+            const calcBillion = calcVal.toFixed(2);
+            const alphaBillion = alpha.toFixed(2);
+            const landBillion = L.toFixed(2);
+            const buildBillion = B.toFixed(2);
+            const intrinsicTotal = (L + B).toFixed(2);
+
+            // Fetch dynamic ratios or defaults
+            const cRatio = contractRatio !== undefined ? contractRatio : 1.40;
+            const rFloor = residualFloor !== undefined ? residualFloor : 20;
+
+            // 1. Speculative Bubble Analysis
+            let alphaText = "";
+            const ratio = alpha / marketPrice;
+            if (alpha < 0) {
+                alphaText = "현재 시장 거래가(<b>" + mPriceBillion + "억</b>)는 모델 가치(<b>" + calcBillion + "억</b>)보다 약 <b>" + Math.abs(alphaBillion) + "억원 저렴하여 확실한 저평가 상태(안전마진 확보)에 있습니다.</b> 실지 지분 토지가 지탱하는 든든한 방어력 대비 저렴한 하방 리스크 상태로 장기적 가치 관점에서의 메리트를 증명합니다.";
+            } else if (ratio <= 0.15) {
+                alphaText = "시장 알파 버퍼가 <b>" + alphaBillion + "억원(약 " + Math.round(ratio*100) + "%)</b>으로 대단히 건전하고 상식적인 범위 내에 놓여 있습니다. 실물 지표 기반의 계약면적 땅값 및 건물값이 호가와 조화롭게 맞물린 튼튼한 우량 시세를 보여줍니다.";
+            } else {
+                alphaText = "현재 시세 중 무려 <b>" + alphaBillion + "억원(매매가의 " + Math.round(ratio*100) + "%)</b>에 달하는 미래 호재 프리미엄 및 투자 거품층(알파)이 강하게 형성되어 있습니다. 이는 뛰어난 한강 조망, 재건축 기대감, 혹은 극도의 유동성 쏠림 수혜가 선반영된 결과이며 조정기에는 하방 변동성이 다소 넓어질 수 있습니다.";
+            }
+
+            // 2. Building Depreciation Analyser
+            let buildingText = "";
+            const decayPercent = Math.round((1 - 0.8 * (age/40)) * 100);
+            if (age >= 40) {
+                buildingText = "경과연수가 <b>" + age + "년</b>으로 주택 재건축 수한(40년)을 초과한 노후 아파트이지만, 지하주차장과 공용부를 반영한 계약면적 원가 적용 및 <b>신축 대비 최소 " + rFloor + "%의 영구 효용(약 " + buildBillion + "억)</b> 보증 덕분에 자산 본질이 냉철하고 타당하게 수렴하고 있습니다.";
+            } else {
+                buildingText = "연식은 <b>" + age + "년차</b>로, 연식 경과에 따른 상각 감쇄 곡선에 의해 신축 대비 <b>" + Math.max(rFloor, decayPercent) + "%</b>의 계약면적 기준 건물 가치(<b>" + buildBillion + "억원</b>)를 지극히 현실적이고 정교하게 반영하고 있습니다.";
+            }
+
+            // 3. Complex Premium Scaler Analyser
+            let sizeText = "";
+            if (households >= 2000) {
+                sizeText = "<b>" + households.toLocaleString() + "세대의 초대형 랜드마크급</b> 위용에 따라, 설정된 프리미엄 곡선 필터는 이 단지에 <b>" + Pm.toFixed(2) + "배</b>의 정교한 대단지 인프라 프리미엄을 부여합니다. 세대수가 만 세대에 치솟아도 제곱-로그 함수가 이를 완만하게 억제해 과대평가 리스크를 원천 차단합니다.";
+            } else if (households >= 500) {
+                sizeText = "<b>" + households.toLocaleString() + "세대의 이상적인 중형 단지</b>로서 <b>" + Pm.toFixed(2) + "배</b>의 준수한 규모 가중치를 적용받아 지역 내 대표 환금성 및 가성비를 합리적인 수치로 증명해 냅니다.";
+            } else {
+                sizeText = "<b>" + households.toLocaleString() + "세대의 소규모 나홀로급 단지</b>입니다. 제곱-정규화 로그 곡선에 의해 가중치가 <b>" + Pm.toFixed(2) + "배</b>에 바짝 붙으며 대단지 가품을 단호히 걷어냅니다. 이는 대단지 버프가 없는 나홀로 단지의 본원적 거래 환경을 대단히 사실적으로 모사합니다.";
+            }
+
+            const reportText = document.getElementById("reportText");
+            if (reportText) {
+                reportText.innerHTML = [
+                    '<div class="p-4 bg-slate-950 rounded-xl border border-slate-800/80">',
+                    '    <p class="text-xs font-semibold text-indigo-400 mb-1.5"><i class="fa-solid fa-circle-nodes"></i> 실물 내재 가치 분석 ($L + B$)</p>',
+                    '    <p class="text-sm">순수 대지 지분의 토지 가치 <b>' + landBillion + '억원</b>에 지하주차장/공용부 계약면적(' + supply + '평 $\\times$ ' + cRatio.toFixed(2) + ' = ' + (supply*cRatio).toFixed(1) + '평)을 고려해 ' + age + '년 상각 후 유도해 낸 건물 가치 <b>' + buildBillion + '억원</b>을 합산해 대단지 가중치를 곱하기 전의 본질 알맹이 가치는 <b>' + intrinsicTotal + '억원</b>입니다.</p>',
+                    '</div>',
+                    '<div class="p-4 bg-slate-950 rounded-xl border border-slate-800/80">',
+                    '    <p class="text-xs font-semibold text-emerald-400 mb-1.5"><i class="fa-solid fa-chart-line"></i> 단지 규모 프리미엄 효과 ($P_m$)</p>',
+                    '    <p class="text-sm">' + sizeText + '</p>',
+                    '</div>',
+                    '<div class="p-4 bg-slate-950 rounded-xl border border-slate-800/80">',
+                    '    <p class="text-xs font-semibold text-rose-400 mb-1.5"><i class="fa-solid fa-shield-halved"></i> 시장 괴리 및 심리적 버퍼 ($\\alpha$)</p>',
+                    '    <p class="text-sm">' + alphaText + '</p>',
+                    '</div>'
+                ].join('\n');
+            }
+        }
+
         // Render dynamic sliders
         function runRealTimeAnalysis() {
             const landArea = parseFloat(slideLandArea.value);
@@ -918,36 +1156,46 @@
             const households = parseInt(slideHouseholds.value);
             const marketPrice = parseFloat(slideMarketPrice.value);
 
-            txtLandArea.textContent = `${landArea.toFixed(1)} 평`;
-            txtSupplySize.textContent = `${supplySize} 평`;
-            txtContractSize.textContent = `(계약면적 환산: ${(supplySize * 1.4).toFixed(1)} 평)`;
-            txtConstPrice.textContent = `${constPrice.toLocaleString()} 만원`;
-            txtBuildingAge.textContent = `${age} 년차`;
-            txtDeprecPercent.textContent = `(물리적 잔존율: ${((1 - 0.8 * Math.min(1, age / 40)) * 100).toFixed(0)}%)`;
-            txtVillaPrice.textContent = `${villaPrice.toLocaleString()} 만원`;
-            txtHouseholds.textContent = `${households.toLocaleString()} 세대`;
+            // Read advanced weights values
+            const scaleWeight = parseFloat(slideScaleWeight.value);
+            const contractRatio = parseFloat(slideContractRatio.value);
+            const residualFloor = parseFloat(slideResidualFloor.value);
 
-            const calc = calculateValuation(landArea, supplySize, constPrice, age, villaPrice, households, marketPrice);
+            // Update advanced tuning badges
+            document.getElementById("val-scale-weight").textContent = scaleWeight.toFixed(2) + " 배";
+            document.getElementById("val-contract-ratio").textContent = contractRatio.toFixed(2) + " 배";
+            document.getElementById("val-residual-floor").textContent = residualFloor + " %";
+
+            txtLandArea.textContent = landArea.toFixed(1) + " 평";
+            txtSupplySize.textContent = supplySize + " 평";
+            txtContractSize.textContent = "(계약면적 환산: " + (supplySize * contractRatio).toFixed(1) + " 평)";
+            txtConstPrice.textContent = constPrice.toLocaleString() + " 만원";
+            txtBuildingAge.textContent = age + " 년차";
+            txtVillaPrice.textContent = villaPrice.toLocaleString() + " 만원";
+            txtHouseholds.textContent = households.toLocaleString() + " 세대";
+
+            const calc = calculateValuation(landArea, supplySize, constPrice, age, villaPrice, households, marketPrice, scaleWeight, contractRatio, residualFloor);
             currentCalculation = calc; // 전역 스냅샷 캐싱
 
-            txtPremiumMultiplier.textContent = `(대단지 가중치: ${calc.premiumMul.toFixed(2)}배)`;
-            txtMarketPrice.textContent = `${marketPrice.toFixed(1)} 억원`;
+            txtDeprecPercent.textContent = "(물리적 잔존율: " + Math.round(calc.ageFactor * 100) + "%)";
+            txtPremiumMultiplier.textContent = "(대단지 가중치: " + calc.premiumMul.toFixed(2) + "배)";
+            txtMarketPrice.textContent = marketPrice.toFixed(1) + " 억원";
 
             // Update main indicators
-            outModelVal.textContent = `${calc.modelVal.toFixed(2)} 억원`;
-            outMarketVal.textContent = `${marketPrice.toFixed(1)} 억원`;
+            outModelVal.textContent = calc.modelVal.toFixed(2) + " 억원";
+            outMarketVal.textContent = marketPrice.toFixed(1) + " 억원";
 
-            ledgerLand.textContent = `${calc.landVal.toFixed(2)} 억원`;
-            ledgerConstUnit.textContent = `${((supplySize * 1.4 * constPrice) / 10000).toFixed(2)} 억원`;
-            ledgerBuilding.textContent = `${calc.buildingVal.toFixed(2)} 억원`;
-            ledgerPremiumMul.textContent = `${calc.premiumMul.toFixed(2)} 배`;
-            ledgerModelTotal.textContent = `${calc.modelVal.toFixed(2)} 억원`;
+            ledgerLand.textContent = calc.landVal.toFixed(2) + " 억원";
+            ledgerConstUnit.textContent = ((supplySize * contractRatio * constPrice) / 10000).toFixed(2) + " 억원";
+            ledgerBuilding.textContent = calc.buildingVal.toFixed(2) + " 억원";
+            ledgerPremiumMul.textContent = calc.premiumMul.toFixed(2) + " 배";
+            ledgerModelTotal.textContent = calc.modelVal.toFixed(2) + " 억원";
 
             let statusLabel = "";
             let statusColorClass = "";
             let alphaPrefix = calc.alpha >= 0 ? "+" : "";
 
-            outAlphaVal.textContent = `${alphaPrefix}${calc.alpha.toFixed(2)} 억원 (${alphaPrefix}${calc.alphaPercent.toFixed(1)}%)`;
+            outAlphaVal.textContent = alphaPrefix + calc.alpha.toFixed(2) + " 억원 (" + alphaPrefix + calc.alphaPercent.toFixed(1) + "%)";
 
             if (calc.alphaPercent < -5) {
                 statusLabel = "🛡️ 내재가치 저평가 (안전마진 확보)";
@@ -969,7 +1217,7 @@
                 lAlphaIndicator.className = "w-2.5 h-2.5 bg-rose-500 rounded-sm";
             }
 
-            cardStatusBg.className = `border p-4 rounded-xl flex flex-col justify-center transition-colors duration-300 ${statusColorClass}`;
+            cardStatusBg.className = "border p-4 rounded-xl flex flex-col justify-center transition-colors duration-300 " + statusColorClass;
             outAlphaStatus.textContent = statusLabel;
 
             // Chart Breakdown normalization
@@ -984,16 +1232,19 @@
             const pctPremium = (rawPremium / sum) * 100;
             const pctAlpha = (rawAlpha / sum) * 100;
 
-            barLand.style.width = `${pctLand}%`;
-            barBuilding.style.width = `${pctBuilding}%`;
-            barPremium.style.width = `${pctPremium}%`;
-            barAlpha.style.width = `${pctAlpha}%`;
+            barLand.style.width = pctLand + "%";
+            barBuilding.style.width = pctBuilding + "%";
+            barPremium.style.width = pctPremium + "%";
+            barAlpha.style.width = pctAlpha + "%";
 
-            lLandText.textContent = `${pctLand.toFixed(0)}%`;
-            lBuildingText.textContent = `${pctBuilding.toFixed(0)}%`;
-            lPremiumText.textContent = `${pctPremium.toFixed(0)}%`;
-            lAlphaText.textContent = calc.alpha < 0 ? `🛡️ 안전 (${Math.abs(calc.alphaPercent).toFixed(0)}%)` : `${pctAlpha.toFixed(0)}%`;
-            txtTotalPercent.textContent = `합계: ${(pctLand + pctBuilding + pctPremium + pctAlpha).toFixed(0)}%`;
+            lLandText.textContent = pctLand.toFixed(0) + "%";
+            lBuildingText.textContent = pctBuilding.toFixed(0) + "%";
+            lPremiumText.textContent = pctPremium.toFixed(0) + "%";
+            lAlphaText.textContent = calc.alpha < 0 ? "🛡️ 안전 (" + Math.abs(calc.alphaPercent).toFixed(0) + "%)" : pctAlpha.toFixed(0) + "%";
+            txtTotalPercent.textContent = "합계: " + (pctLand + pctBuilding + pctPremium + pctAlpha).toFixed(0) + "%";
+
+            // Generate diagnostic text report without division bugs
+            generateReport(supplySize, landArea, age, households, calc.landVal, calc.buildingVal, calc.premiumMul, calc.modelVal, calc.alpha, marketPrice, contractRatio, residualFloor);
 
             // Re-render LaTeX math beautifully if loaded
             if (window.MathJax && window.MathJax.typesetPromise) {
@@ -1001,75 +1252,31 @@
             }
         }
 
-        // Apply sliders listeners
-        [slideLandArea, slideSupplySize, slideConstPrice, slideBuildingAge, slideVillaPrice, slideHouseholds, slideMarketPrice].forEach(s => {
+        // Apply sliders listeners (Updated with Advanced tuning range controls)
+        [slideLandArea, slideSupplySize, slideConstPrice, slideBuildingAge, slideVillaPrice, slideHouseholds, slideMarketPrice, slideScaleWeight, slideContractRatio, slideResidualFloor].forEach(s => {
             s.addEventListener("input", runRealTimeAnalysis);
         });
-
-        // 🔑 API Config Modal Listeners
-        btnApiConfig.addEventListener("click", () => {
-            inputApiKey.value = localStorage.getItem("user_gemini_api_key") || "";
-            modalApiConfig.classList.remove("hidden");
-        });
-        btnCloseApiConfig.addEventListener("click", () => {
-            modalApiConfig.classList.add("hidden");
-        });
-        btnSaveApiKey.addEventListener("click", () => {
-            const key = inputApiKey.value.trim();
-            if (key) {
-                localStorage.setItem("user_gemini_api_key", key);
-                showToast("Gemini API 수동 키가 저장되었습니다. (해당 컴퓨터에 유지됨)", "success");
-            } else {
-                localStorage.removeItem("user_gemini_api_key");
-                showToast("수동 키가 성공적으로 삭제되었습니다.", "info");
-            }
-            updateApiStatusUI();
-            modalApiConfig.classList.add("hidden");
-        });
-
-        // 🔒 원클릭 API 키 삭제 연산 기능 (Shred)
-        btnDeleteApiKey.addEventListener("click", () => {
-            localStorage.removeItem("user_gemini_api_key");
-            inputApiKey.value = "";
-            updateApiStatusUI();
-            showToast("보안 세션에서 API 키가 영구적으로 파쇄 삭제되었습니다.", "success");
-            modalApiConfig.classList.add("hidden");
-        });
-
-        // 🔑 Get active api key helper (No DB queries, pure LocalStorage)
-        function getActiveApiKey() {
-            return localStorage.getItem("user_gemini_api_key") || "";
-        }
-
-        // Update Header API Configuration indicator
-        function updateApiStatusUI() {
-            const key = getActiveApiKey();
-            if (key) {
-                headerApiIcon.className = "fa-solid fa-wand-magic-sparkles text-emerald-400";
-                headerApiText.textContent = "✨ AI 엔진 가동 중";
-                headerApiText.className = "text-emerald-400 font-extrabold";
-            } else {
-                headerApiIcon.className = "fa-solid fa-key text-amber-400";
-                headerApiText.textContent = "🔑 API 키 미등록";
-                headerApiText.className = "text-slate-200 font-bold";
-            }
-        }
-
-        // Check if API Key configured locally
-        function checkApiKeyConfigured() {
-            const key = getActiveApiKey();
-            return key.length > 0;
-        }
 
         // Initialize App flow
         async function initApp() {
             populateDistrictOptions();
-            writeDebugLog("애플리케이션 초기화 시동...");
+            writeDebugLog("애플리케이션 초기화 시동...", false);
 
             const badge = document.getElementById("db-status-badge");
             const badgeText = document.getElementById("db-status-text");
 
             updateApiStatusUI();
+
+            // ⚡ 4-Second Timeout Fail-Safe Fallback system
+            let isDbLoading = true;
+            let dbTimeout = setTimeout(() => {
+                if (isDbLoading) {
+                    writeDebugLog("서버 응답 지연으로 로컬 스토리지 데이터 백업 모드를 자동 가동합니다.", true);
+                    loadLocalStorageFallback();
+                    badge.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-amber-500/10 border border-amber-500/30 text-amber-400";
+                    badgeText.textContent = "로컬 백업 단독 가동 모드";
+                }
+            }, 4000);
 
             try {
                 // Initialize Firebase
@@ -1084,12 +1291,12 @@
                 // Authentication Listener to seamlessly handle anonymous session (Rule 3)
                 onAuthStateChanged(auth, async (user) => {
                     if (user) {
-                        writeDebugLog(`클라우드 세션 확보 완료. UID: ${user.uid}`);
+                        writeDebugLog("클라우드 세션 확보 완료. UID: " + user.uid, false);
                         badge.className = "flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-emerald-500/10 border border-emerald-500/30 text-emerald-400";
                         badgeText.textContent = "실시간 서버 연동 중 (익명)";
                     } else {
                         // Not logged in at all, trigger anonymous login to secure database sync (Rule 3)
-                        writeDebugLog("권한 유실. 익명 세션 재획득 중...");
+                        writeDebugLog("권한 유실. 익명 세션 재획득 중...", true);
                         await signInAnonymously(auth);
                     }
                 });
@@ -1098,36 +1305,42 @@
 
                 // Real-time Firestore Database listeners (No complex queries - Rule 2)
                 onSnapshot(apartmentsCollection, (snapshot) => {
+                    isDbLoading = false;
+                    clearTimeout(dbTimeout);
                     const serverList = [];
                     snapshot.forEach((doc) => {
-                        serverList.push({ id: doc.id, ...doc.data() });
+                        serverList.push(Object.assign({ id: doc.id }, doc.data()));
                     });
-                    appData = [...staticPresets, ...serverList];
+                    appData = staticPresets.concat(serverList);
                     renderMatrixTable();
-                    writeDebugLog(`서버 데이터 동기화 완료 (자산 총 ${appData.length}개)`);
+                    writeDebugLog("서버 데이터 동기화 완료 (자산 총 " + appData.length + "개)", false);
                 }, (err) => {
                     console.error(err);
-                    writeDebugLog(`실시간 데이터 동기화 실패 (보안 규칙 차단 가능성): ${err.message}`, true);
+                    writeDebugLog("실시간 데이터 동기화 실패 (보안 규칙 차단 가능성): " + err.message, true);
+                    // Automatic local storage fallback on permission/snapshot errors
+                    loadLocalStorageFallback();
                 });
 
                 // Audit Log Listener (No complex queries - Rule 2)
                 onSnapshot(logsCollection, (snapshot) => {
                     const logs = [];
                     snapshot.forEach(doc => {
-                        logs.push({ id: doc.id, ...doc.data() });
+                        logs.push(Object.assign({ id: doc.id }, doc.data()));
                     });
                     // Sort logs manually in memory to prevent compounding query index crashes (Rule 2)
                     logs.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
                     logData = logs;
-                    writeDebugLog(`감사 히스토리 동기화 완료 (로그 총 ${logData.length}건)`);
+                    writeDebugLog("감사 히스토리 동기화 완료 (로그 총 " + logData.length + "건)", false);
                 }, (err) => {
                     console.error(err);
-                    writeDebugLog(`감사 히스토리 로딩 실패: ${err.message}`, true);
+                    writeDebugLog("감사 히스토리 로딩 실패: " + err.message, true);
                 });
 
             } catch (error) {
+                isDbLoading = false;
+                clearTimeout(dbTimeout);
                 console.error("Firebase 초기화 에러:", error);
-                writeDebugLog(`연동 실패: ${error.message} - 로컬 모드로 우회 가동합니다.`, true);
+                writeDebugLog("연동 실패: " + error.message + " - 로컬 모드로 우회 가동합니다.", true);
                 
                 // Fallback to LocalStorage
                 useFirebase = false;
@@ -1146,27 +1359,33 @@
             if (stored) {
                 try { localList = JSON.parse(stored); } catch(e) { localList = []; }
             }
-            appData = [...staticPresets, ...localList];
+            appData = staticPresets.concat(localList);
             renderMatrixTable();
         }
 
-        // Render visual table
+        // Render visual table (Updated with live advanced weights support)
         function renderMatrixTable() {
             const search = tableSearch.value.trim().toLowerCase();
 
             let filtered = appData.filter(item => {
                 const matchRegion = item.region.toLowerCase().includes(search);
                 const matchDistrict = item.district.toLowerCase().includes(search);
+                const matchSubDistrict = (item.subDistrict || "").toLowerCase().includes(search);
                 const matchName = item.name.toLowerCase().includes(search);
                 const matchAuthor = (item.author || "").toLowerCase().includes(search);
-                return matchRegion || matchDistrict || matchName || matchAuthor;
+                return matchRegion || matchDistrict || matchSubDistrict || matchName || matchAuthor;
             });
 
             // Feed live calculation properties before memory sorting (Rule 2)
             filtered.forEach(item => {
+                const itemScaleWeight = item.scaleWeight !== undefined ? item.scaleWeight : 0.35;
+                const itemContractRatio = item.contractRatio !== undefined ? item.contractRatio : 1.40;
+                const itemResidualFloor = item.residualFloor !== undefined ? item.residualFloor : 20;
+
                 const calc = calculateValuation(
                     item.landArea, item.supplySize, item.constructionPrice || 1000,
-                    item.buildingAge, item.villaLandPrice || 3500, item.households, item.marketPrice
+                    item.buildingAge, item.villaLandPrice || 3500, item.households, item.marketPrice,
+                    itemScaleWeight, itemContractRatio, itemResidualFloor
                 );
                 item.modelValue = calc.modelVal;
                 item.alphaValue = calc.alpha;
@@ -1179,7 +1398,7 @@
                 const valB = b[currentSortKey];
 
                 if (typeof valA === "string") {
-                    return currentSortOrder === "asc" ? valA.localeCompare(valB) : valB.localeCompare(valA);
+                    return currentSortOrder === "asc" ? valA.localeCompare(valB, "ko") : valB.localeCompare(valA, "ko");
                 }
                 return currentSortOrder === "asc" ? valA - valB : valB - valA;
             });
@@ -1187,7 +1406,7 @@
             matrixTbody.innerHTML = "";
 
             if (filtered.length === 0) {
-                matrixTbody.innerHTML = `<tr><td colspan="11" class="py-12 text-center text-slate-500 font-medium">검색 조건에 부합하는 가치 검증 단지가 존재하지 않습니다.</td></tr>`;
+                matrixTbody.innerHTML = '<tr><td colspan="11" class="py-12 text-center text-slate-500 font-medium">검색 조건에 부합하는 가치 검증 단지가 존재하지 않습니다.</td></tr>';
                 return;
             }
 
@@ -1198,46 +1417,41 @@
                 let badgeLabel = "";
                 if (item.alphaPercent < -5) {
                     badgeClass = "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20";
-                    badgeLabel = `🛡️ 저평가 (${item.alphaPercent.toFixed(0)}%)`;
+                    badgeLabel = "🛡️ 저평가 (" + item.alphaPercent.toFixed(0) + "%)";
                 } else if (item.alphaPercent <= 15) {
                     badgeClass = "bg-sky-500/10 text-sky-400 border border-sky-500/20";
-                    badgeLabel = `⚖️ 적정 (${item.alphaPercent.toFixed(0)}%)`;
+                    badgeLabel = "⚖️ 적정 (" + item.alphaPercent.toFixed(0) + "%)";
                 } else {
                     badgeClass = "bg-rose-500/10 text-rose-400 border border-rose-500/20";
-                    badgeLabel = `🚨 거품 (+${item.alphaPercent.toFixed(0)}%)`;
+                    badgeLabel = "🚨 거품 (+" + item.alphaPercent.toFixed(0) + "%)";
                 }
 
                 const tr = document.createElement("tr");
                 tr.className = "hover:bg-slate-900/40 cursor-pointer transition border-b border-slate-900 select-none";
 
-                tr.innerHTML = `
-                    <td class="py-3 px-4 font-semibold text-slate-400" onclick="loadItemToEditor('${item.id}')">${item.region}</td>
-                    <td class="py-3 px-4 font-bold text-slate-300" onclick="loadItemToEditor('${item.id}')">${item.district}</td>
-                    <td class="py-3 px-4 font-extrabold text-white flex items-center gap-1.5" onclick="loadItemToEditor('${item.id}')">
-                        ${isCustom ? '<i class="fa-solid fa-cloud text-sky-400 text-[10px]"></i>' : ''} ${item.name}
-                        <span class="text-[9px] text-slate-500 font-normal">by ${item.author || "비공개"}</span>
-                    </td>
-                    <td class="py-3 px-4 text-slate-300 font-medium" onclick="loadItemToEditor('${item.id}')">${item.sizeType}</td>
-                    <td class="py-3 px-4 text-right font-mono" onclick="loadItemToEditor('${item.id}')">${item.households.toLocaleString()}세대</td>
-                    <td class="py-3 px-4 text-right font-mono" onclick="loadItemToEditor('${item.id}')">${item.buildingAge}년</td>
-                    <td class="py-3 px-4 text-right font-mono text-emerald-400" onclick="loadItemToEditor('${item.id}')">${item.landArea.toFixed(1)}평</td>
-                    <td class="py-3 px-4 text-right font-mono font-bold text-emerald-400" onclick="loadItemToEditor('${item.id}')">${item.modelValue.toFixed(1)}억</td>
-                    <td class="py-3 px-4 text-right font-mono font-bold text-purple-400" onclick="loadItemToEditor('${item.id}')">${item.marketPrice.toFixed(1)}억</td>
-                    <td class="py-3 px-4 text-center" onclick="loadItemToEditor('${item.id}')">
-                        <span class="px-2.5 py-1 rounded-full text-[10px] font-bold ${badgeClass}">${badgeLabel}</span>
-                    </td>
-                    <td class="py-3 px-4 text-center">
-                        <div class="flex gap-2 justify-center">
-                            <button onclick="loadItemToEditor('${item.id}')" class="p-1.5 text-indigo-400 hover:bg-indigo-500/10 rounded border border-indigo-500/20 transition" title="상세 로드 및 편집">
-                                <i class="fa-solid fa-pen-to-square"></i>
-                            </button>
-                            ${isCustom ? `
-                            <button onclick="deleteCustomItem(event, '${item.id}')" class="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded border border-rose-500/20 transition" title="영구 삭제">
-                                <i class="fa-solid fa-trash-can"></i>
-                            </button>` : `<span class="text-slate-600 text-[9px] italic py-1 px-1.5">Preset</span>`}
-                        </div>
-                    </td>
-                `;
+                let deleteButtonHtml = isCustom ? 
+                    '<button onclick="deleteCustomItem(event, \'' + item.id + '\')" class="p-1.5 text-rose-400 hover:bg-rose-500/10 rounded border border-rose-500/20 transition" title="영구 삭제"><i class="fa-solid fa-trash-can"></i></button>' : 
+                    '<span class="text-slate-600 text-[9px] italic py-1 px-1.5">Preset</span>';
+
+                tr.innerHTML = [
+                    '<td class="py-3 px-4 font-semibold text-slate-400" onclick="loadItemToEditor(\'' + item.id + '\')">' + item.region + '</td>',
+                    '<td class="py-3 px-4 font-bold text-slate-300" onclick="loadItemToEditor(\'' + item.id + '\')">' + item.district + '</td>',
+                    '<td class="py-3 px-4 font-extrabold text-white flex items-center gap-1.5" onclick="loadItemToEditor(\'' + item.id + '\')">',
+                    (isCustom ? '<i class="fa-solid fa-cloud text-sky-400 text-[10px]"></i> ' : '') + item.name,
+                    '<span class="text-[9px] text-slate-500 font-normal">by ' + (item.author || "비공개") + '</span></td>',
+                    '<td class="py-3 px-4 text-slate-300 font-medium" onclick="loadItemToEditor(\'' + item.id + '\')">' + item.sizeType + '</td>',
+                    '<td class="py-3 px-4 text-right font-mono" onclick="loadItemToEditor(\'' + item.id + '\')">' + item.households.toLocaleString() + '세대</td>',
+                    '<td class="py-3 px-4 text-right font-mono" onclick="loadItemToEditor(\'' + item.id + '\')">' + item.buildingAge + '년</td>',
+                    '<td class="py-3 px-4 text-right font-mono text-emerald-400" onclick="loadItemToEditor(\'' + item.id + '\')">' + item.landArea.toFixed(1) + '평</td>',
+                    '<td class="py-3 px-4 text-right font-mono font-bold text-emerald-400" onclick="loadItemToEditor(\'' + item.id + '\')">' + item.modelValue.toFixed(1) + '억</td>',
+                    '<td class="py-3 px-4 text-right font-mono font-bold text-purple-400" onclick="loadItemToEditor(\'' + item.id + '\')">' + item.marketPrice.toFixed(1) + '억</td>',
+                    '<td class="py-3 px-4 text-center" onclick="loadItemToEditor(\'' + item.id + '\')">',
+                    '<span class="px-2.5 py-1 rounded-full text-[10px] font-bold ' + badgeClass + '">' + badgeLabel + '</span></td>',
+                    '<td class="py-3 px-4 text-center"><div class="flex gap-2 justify-center">',
+                    '<button onclick="loadItemToEditor(\'' + item.id + '\')" class="p-1.5 text-indigo-400 hover:bg-indigo-500/10 rounded border border-indigo-500/20 transition" title="상세 로드 및 편집"><i class="fa-solid fa-pen-to-square"></i></button>',
+                    deleteButtonHtml + '</div></td>'
+                ].join('');
+
                 matrixTbody.appendChild(tr);
             });
         }
@@ -1261,6 +1475,8 @@
             elRegion.value = item.region;
             populateDistrictOptions();
             elDistrict.value = item.district;
+            populateSubDistrictOptions();
+            elSubDistrict.value = item.subDistrict || "";
             elAptName.value = item.name;
             elSizeType.value = item.sizeType;
             elAuthor.value = item.author || "비공개";
@@ -1273,14 +1489,19 @@
             slideHouseholds.value = item.households;
             slideMarketPrice.value = item.marketPrice;
 
+            // Load advanced weights safely with defaults fallback
+            slideScaleWeight.value = item.scaleWeight !== undefined ? item.scaleWeight : 0.35;
+            slideContractRatio.value = item.contractRatio !== undefined ? item.contractRatio : 1.40;
+            slideResidualFloor.value = item.residualFloor !== undefined ? item.residualFloor : 20;
+
             runRealTimeAnalysis();
 
             editIndicator.classList.remove("hidden");
             btnSaveText.textContent = "⚠️ 선택 단지 정보 수정 반영";
             btnSave.className = "w-full bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white py-3 rounded-xl font-bold text-sm transition duration-300 shadow-lg shadow-rose-600/20 active:scale-95 flex items-center justify-center gap-2";
 
-            showToast(`[${item.name}] 정보가 슬라이더에 성공적으로 동기화되었습니다.`, "success");
-            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showToast("[" + item.name + "] 정보가 슬라이더에 성공적으로 동기화되었습니다.", "success");
+            window.scrollTo({ top: 0, behavior: "smooth" });
         };
 
         // Custom save CRUD function supporting Logging (Strict manual checks applied during SAVE)
@@ -1290,6 +1511,7 @@
             const sizeType = elSizeType.value.trim() || "34평형";
             const region = elRegion.value;
             const district = elDistrict.value;
+            const subDistrict = elSubDistrict.value;
 
             // Manual adjustment validator checks
             if (!author || author === "" || author === "비공개") {
@@ -1298,8 +1520,8 @@
                 return;
             }
 
-            if (!region || !district) {
-                showToast("수동 저장 시에는 아파트의 정확한 행정구역(시·도 및 시·군·구)을 설정해 주셔야 합니다.", "error");
+            if (!region || !district || !subDistrict) {
+                showToast("수동 저장 시에는 아파트의 정확한 행정구역(시·도 및 시·군·구 및 상세 동)을 설정해 주셔야 합니다.", "error");
                 elRegion.focus();
                 return;
             }
@@ -1311,18 +1533,1106 @@
             }
 
             const payload = {
-                author,
-                region,
-                district,
-                name,
-                sizeType,
+                author: author,
+                region: region,
+                district: district,
+                subDistrict: subDistrict,
+                name: name,
+                sizeType: sizeType,
                 landArea: parseFloat(slideLandArea.value),
                 supplySize: parseInt(slideSupplySize.value),
                 constructionPrice: parseInt(slideConstPrice.value),
                 buildingAge: parseInt(slideBuildingAge.value),
                 villaLandPrice: parseInt(slideVillaPrice.value),
                 households: parseInt(slideHouseholds.value),
-                marketPrice: parseFloat(slideMarketPrice.value)
+                marketPrice: parseFloat(slideMarketPrice.value),
+                // Saved with advanced weights configurations
+                scaleWeight: parseFloat(slideScaleWeight.value),
+                contractRatio: parseFloat(slideContractRatio.value),
+                residualFloor: parseFloat(slideResidualFloor.value)
+            };
+
+            const confirmProc = await showCustomConfirm(
+                currentEditingId ? "정보 수정 컨펌" : "신규 자산 등록 컨펌",
+                currentEditingId ? "선택하신 [" + name + "] 단지의 가치를 변경하시겠습니까? 기록이 남습니다." : "새로운 단지 [" + name + "]의 원가 가치를 전체 네트워크 대장에 전송할까요?"
+            );
+            if (!confirmProc) return;
+
+            if (useFirebase) {
+                try {
+                    let actionType = "CREATE";
+                    let targetDocId = "";
+
+                    if (currentEditingId && !currentEditingId.startsWith("static-")) {
+                        actionType = "UPDATE";
+                        targetDocId = currentEditingId;
+                        const docRef = doc(db, "artifacts", "apt-real-price", "public", "data", "apartments", currentEditingId);
+                        await updateDoc(docRef, payload);
+                        writeDebugLog("[" + name + "] 문서 수정 성공. ID: " + targetDocId, false);
+                    } else {
+                        // Create brand new doc
+                        const docRef = await addDoc(apartmentsCollection, payload);
+                        targetDocId = docRef.id;
+                        writeDebugLog("[" + name + "] 신규 문서 추가 완료. ID: " + targetDocId, false);
+                    }
+
+                    // Log audit snap to logs collection (Strict Path Rule 1)
+                    await addDoc(logsCollection, {
+                        action: actionType,
+                        targetId: targetDocId,
+                        aptName: name,
+                        sizeType: sizeType,
+                        author: author,
+                        timestamp: new Date().toISOString(),
+                        snapshot: payload
+                    });
+
+                    showToast("[" + name + "]의 자산 가치가 성공적으로 업데이트되었습니다.", "success");
+                    resetEditorState();
+
+                } catch (e) {
+                    console.error(e);
+                    showToast("서버 통신 중 에러가 발생했습니다.", "error");
+                }
+            } else {
+                // LocalStorage Fallback logic
+                let userList = [];
+                const stored = localStorage.getItem("apt_local_backup_data");
+                if (stored) {
+                    try { userList = JSON.parse(stored); } catch(e) {}
+                }
+
+                if (currentEditingId && !currentEditingId.startsWith("static-")) {
+                    userList = userList.map(item => item.id === currentEditingId ? Object.assign({}, item, payload) : item);
+                } else {
+                    payload.id = "user-" + Date.now();
+                    userList.push(payload);
+                }
+
+                localStorage.setItem("apt_local_backup_data", JSON.stringify(userList));
+                showToast("로컬 브라우저에 예시 가치를 정상 수록했습니다.", "success");
+                resetEditorState();
+                loadLocalStorageFallback();
+            }
+        });
+
+        window.deleteCustomItem = async function(event, id) {
+            event.stopPropagation();
+            
+            const target = appData.find(item => item.id === id);
+            const targetName = target ? target.name : "선택 아파트";
+
+            const confirmProc = await showCustomConfirm("단지 영구삭제 확인", "[" + targetName + "] 가치 데이터를 대장에서 완전히 제거하시겠습니까? 변경 내역은 감사로그에 기록됩니다.");
+            if (!confirmProc) return;
+
+            if (useFirebase) {
+                try {
+                    const docRef = doc(db, "artifacts", "apt-real-price", "public", "data", "apartments", id);
+                    await deleteDoc(docRef);
+
+                    // Add Delete audit snap
+                    await addDoc(logsCollection, {
+                        action: "DELETE",
+                        targetId: id,
+                        aptName: targetName,
+                        sizeType: target ? target.sizeType : "",
+                        author: target ? target.author : "시스템",
+                        timestamp: new Date().toISOString(),
+                        snapshot: target
+                    });
+
+                    showToast("[" + targetName + "] 가치가 영구 제거되었습니다.", "success");
+                    if (currentEditingId === id) resetEditorState();
+
+                } catch (e) {
+                    console.error(e);
+                    showToast("삭제 도중 권한이 유실되었거나 실패했습니다.", "error");
+                }
+            } else {
+                let userList = [];
+                const stored = localStorage.getItem("apt_local_backup_data");
+                if (stored) {
+                    try { userList = JSON.parse(stored); } catch(e) {}
+                }
+                userList = userList.filter(item => item.id !== id);
+                localStorage.setItem("apt_local_backup_data", JSON.stringify(userList));
+                
+                showToast("로컬 백업 데이터를 소멸시켰습니다.", "success");
+                if (currentEditingId === id) resetEditorState();
+                loadLocalStorageFallback();
+            }
+        };
+
+        function resetEditorState() {
+            currentEditingId = null;
+            elAptName.value = "";
+            elSizeType.value = "";
+            editIndicator.classList.add("hidden");
+            btnSaveText.textContent = "현재 조건 예시로 등록 / 저장";
+            btnSave.className = "w-full bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white py-3 rounded-xl font-bold text-sm transition duration-300 shadow-lg shadow-indigo-600/20 active:scale-95 flex items-center justify-center gap-2";
+            
+            // Reset advanced weights defaults
+            slideScaleWeight.value = 0.35;
+            slideContractRatio.value = 1.40;
+            slideResidualFloor.value = 20;
+
+            runRealTimeAnalysis();
+        }
+
+        // Audit Trail Rollback Engine
+        window.restoreLogSnapshot = async function(logId) {
+            const logItem = logData.find(l => l.id === logId);
+            if (!logItem || !logItem.snapshot) {
+                showToast("해당 시점의 보존 데이터 스냅샷을 찾을 수 없습니다.", "error");
+                return;
+            }
+
+            const payload = logItem.snapshot;
+            const targetId = logItem.targetId;
+
+            const confirmProc = await showCustomConfirm(
+                "스냅샷 시점 원클릭 롤백",
+                "[" + payload.name + " - " + payload.sizeType + "] 정보를 복제하여 해당 이력 시점 상태로 가치를 원격 복구할까요?"
+            );
+            if (!confirmProc) return;
+
+            if (useFirebase) {
+                try {
+                    // Force setDoc to guarantee recreate even if deleted (Strict Rule 1)
+                    const targetDocRef = doc(db, "artifacts", "apt-real-price", "public", "data", "apartments", targetId);
+                    await setDoc(targetDocRef, payload);
+
+                    // Add backup restored log
+                    await addDoc(logsCollection, {
+                        action: "RESTORE",
+                        targetId: targetId,
+                        aptName: payload.name,
+                        sizeType: payload.sizeType,
+                        author: "가치복원가",
+                        timestamp: new Date().toISOString(),
+                        snapshot: payload
+                    });
+
+                    showToast("선택한 타임라인 지점으로 자산이 복원되었습니다!", "success");
+                    modalHistory.classList.add("hidden");
+
+                } catch (e) {
+                    console.error(e);
+                    showToast("서버 복구 권한 오류가 발생했습니다.", "error");
+                }
+            } else {
+                showToast("로컬 모드에서는 롤백 기능을 지원하지 않습니다.", "error");
+            }
+        };
+
+        // Render History Log cards
+        window.renderHistoryLogs = function() {
+            historyLogsContainer.innerHTML = "";
+            
+            if (logData.length === 0) {
+                historyLogsContainer.innerHTML = '<div class="text-center py-12 text-slate-500 text-xs">서버에서 아직 생성된 로그 트레일이 존재하지 않습니다.</div>';
+                return;
+            }
+
+            logData.forEach(log => {
+                let actionBadgeColor = "";
+                if (log.action === "CREATE") actionBadgeColor = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
+                else if (log.action === "UPDATE") actionBadgeColor = "bg-amber-500/10 text-amber-400 border-amber-500/20";
+                else if (log.action === "DELETE") actionBadgeColor = "bg-rose-500/10 text-rose-400 border-rose-500/20";
+                else actionBadgeColor = "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
+
+                const dateStr = new Date(log.timestamp).toLocaleString();
+                const card = document.createElement("div");
+                card.className = "bg-slate-955/60 p-4 rounded-xl border border-slate-855 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-slate-800 transition";
+                
+                card.innerHTML = [
+                    '<div class="flex flex-col gap-1 text-xs">',
+                    '  <div class="flex items-center gap-2">',
+                    '    <span class="px-2 py-0.5 rounded text-[9px] font-black border ' + actionBadgeColor + '">' + log.action + '</span>',
+                    '    <span class="text-slate-200 font-extrabold text-[13px]">' + log.aptName + '</span>',
+                    '    <span class="text-slate-500 text-[10px]">' + (log.sizeType || "") + '</span>',
+                    '  </div>',
+                    '  <div class="text-slate-400 mt-1">수행인: <span class="text-indigo-300 font-semibold">' + log.author + '</span> | 타임라인: <span class="text-slate-500">' + dateStr + '</span></div>',
+                    '</div>',
+                    '<button onclick="restoreLogSnapshot(\'' + log.id + '\')" class="shrink-0 text-[10px] font-bold bg-indigo-600/15 hover:bg-indigo-600 text-indigo-400 hover:text-white px-3 py-1.5 rounded border border-indigo-500/25 transition">',
+                    '  <i class="fa-solid fa-clock-rotate-left mr-1"></i> 이 시점으로 가치 복구',
+                    '</button>'
+                ].join('\n');
+
+                historyLogsContainer.appendChild(card);
+            });
+        };
+
+        // History modal listeners
+        btnShowHistory.addEventListener("click", () => {
+            window.renderHistoryLogs();
+            modalHistory.classList.remove("hidden");
+        });
+
+        btnCloseHistory.addEventListener("click", () => {
+            modalHistory.classList.add("hidden");
+        });
+
+        // Close modal on outer click
+        modalHistory.addEventListener("click", (e) => {
+            if (e.target === modalHistory) modalHistory.classList.add("hidden");
+        });
+
+        // ----------------- ✨ Gemini API Integration & AI Reports -----------------
+        
+        // Simple Markdown parsing replacement engine inside single-file iFrame limits (Corrected Regular Expressions)
+        function parseMarkdownToHtml(md) {
+            if (!md) return "";
+            let html = md
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                // Headers
+                .replace(/^### (.*$)/gim, '<h5 class="text-sm font-bold text-sky-400 mt-4 mb-2">$1</h5>')
+                .replace(/^## (.*$)/gim, '<h4 class="text-base font-extrabold text-indigo-300 mt-5 mb-3 border-b border-slate-800 pb-1 flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-[10px] text-indigo-400"></i> $1</h4>')
+                .replace(/^# (.*$)/gim, '<h3 class="text-lg font-black text-white mt-6 mb-4">$1</h3>')
+                // Bold text
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
+                // Bullet list elements
+                .replace(/^\s*[\-\*]\s*(.*$)/gim, '<li class="ml-4 list-disc text-slate-300 my-1">$1</li>')
+                // Paragraph processing (double newlines)
+                .split("\n\n").map(p => {
+                    if (p.trim().startsWith("<h") || p.trim().startsWith("<li")) return p;
+                    return '<p class="my-2.5 text-slate-300 leading-relaxed">' + p + '</p>';
+                }).join("\n");
+            return html;
+        }
+
+        // Fetch using Exponential Backoff (Up to 5 Retries)
+        async function fetchGeminiWithBackoff(prompt, systemPrompt, customConfig) {
+            const apiKey = getActiveApiKey();
+            if (!apiKey) {
+                throw new Error("Gemini API 키가 설정되어 있지 않습니다. 우측 상단 '🔑 API 설정'을 통해 개인 키를 입력해 주세요.");
+            }
+            
+            const url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=" + apiKey;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                tools: [{ "google_search": {} }] // Enable Google Search grounding dynamically
+            };
+
+            if (customConfig) {
+                payload.generationConfig = customConfig;
+            }
+
+            let delay = 1000;
+            for (let attempt = 1; attempt <= 5; attempt++) {
+                try {
+                    const response = await fetch(url, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                    if (response.ok) {
+                        return await response.json();
+                    }
+                } catch (err) {
+                    // Fail silently and defer to retry
+                }
+                await new Promise(resolve => setTimeout(resolve, delay));
+                delay *= 2;
+            }
+            throw new Error("서버 및 인프라 연동 상태가 혼잡합니다. 잠시 후 보고서 생성을 다시 작동해 주세요.");
+        }
+
+        // Trigger AI Diagnosis Report Generation (Template literals replaced with safe string concatenation)
+        btnGenerateAI.addEventListener("click", async () => {
+            if (!checkApiKeyConfigured()) {
+                showToast("AI 진단을 시작하기 위해 먼저 Gemini API 키를 등록해 주세요.", "error");
+                modalApiConfig.classList.remove("hidden");
+                return;
+            }
+
+            const region = elRegion.value;
+            const district = elDistrict.value;
+            const aptName = elAptName.value.trim();
+            const sizeType = elSizeType.value.trim() || "34평형 규격";
+
+            if (!aptName) {
+                showToast("AI 진단을 시작하기 위해 먼저 단지명을 바르게 입력해 주세요.", "error");
+                elAptName.focus();
+                return;
+            }
+
+            const calc = currentCalculation;
+            if (!calc) {
+                showToast("시뮬레이터 가치 연산에 오류가 발견되었습니다.", "error");
+                return;
+            }
+
+            // Hide old outputs & show loaders with dynamic captions
+            elAIReportArea.classList.add("hidden");
+            elAILoading.classList.remove("hidden");
+            btnGenerateAI.disabled = true;
+
+            const loadingCaptions = [
+                "🔍 인근 지역 실시간 개발 호재 및 시세 탐색 중...",
+                "📊 감정평가 이론 내재가치와 괴리 요인(알파) 해석 중...",
+                "🔮 거시경제 요인을 감안한 향후 5개년 투자 타당성 연산 중...",
+                "✍️ 최고급 가치 진단 리포트 활자 인쇄 중..."
+            ];
+            
+            let captionIndex = 0;
+            elAILoadingStatus.textContent = loadingCaptions[0];
+            const captionInterval = setInterval(() => {
+                captionIndex = (captionIndex + 1) % loadingCaptions.length;
+                elAILoadingStatus.textContent = loadingCaptions[captionIndex];
+            }, 2200);
+
+            // Construct Gemini dynamic prompt variables using safe string concatenation
+            const prompt = "분석 아파트 주요 스펙:\n" +
+                "- 행정 구역: " + region + " " + district + "\n" +
+                "- 단지 명칭: " + aptName + " (" + sizeType + ")\n" +
+                "- 보유 대지지분: " + slideLandArea.value + " 평 (인근 빌라 대지 평당 기준가: " + slideVillaPrice.value + " 만원)\n" +
+                "- 계약면적 환산 공급 규모: " + slideSupplySize.value + " 평 (계약 면적: " + (parseFloat(slideSupplySize.value) * 1.4).toFixed(1) + " 평)\n" +
+                "- 평당 계약 건축비: " + slideConstPrice.value + " 만원\n" +
+                "- 단지 세대수 규모: " + slideHouseholds.value + " 세대 (Pm 세대수 가중치: " + calc.premiumMul.toFixed(2) + "배)\n" +
+                "- 경과연수 (연식): " + slideBuildingAge.value + " 년 (건물 물리 상각 잔존율: " + calc.ageFactor.toFixed(2) + "배)\n\n" +
+                "시뮬레이터 연산 데이터:\n" +
+                "- 수학적 이론 내재가치: " + calc.modelVal.toFixed(2) + " 억 원\n" +
+                "- 현재 시장 매매 호가: " + (calc.alpha >= 0 ? "과열" : "안전마진") + " 조절가 " + parseFloat(slideMarketPrice.value).toFixed(2) + " 억 원\n" +
+                "- 시장 가격 편차(알파, 거품 격차): " + calc.alpha.toFixed(2) + " 억 원 (편차 비율: " + calc.alphaPercent.toFixed(1) + "%)\n" +
+                "- 시뮬레이터 판정: " + outAlphaStatus.textContent + "\n\n" +
+                "실시간 구글 검색(Google Grounding) 최신 정보를 바탕으로 아래 항목들을 신뢰도 높게 고찰하여 마크다운 리포트로 출력해 줘:\n" +
+                "1. [입지 및 정주 인프라 정밀 진단] (교통 접근성, 학군 메리트, 주요 직주근접 및 호재 결합)\n" +
+                "2. [수학적 내재가치와 시장가의 괴리 원인 분석] (우리가 산정한 이론 가치와 시장 호가 사이의 알파가 단순 거품인지, 아니면 미래 가치(재건축 가능성, 독보적 프리미엄)를 선반영한 무형의 자산 가치인지 논평)\n" +
+                "3. [향후 5개년 투자 매력도 및 추천 등급] (보수적 금리 여건을 감안한 투자 가치 및 1~10점 척도의 가치 보존성 점수 제시)";
+
+            const systemPrompt = "너는 대한민국 최고의 권위를 자랑하는 서울, 경기, 인천 권역 전용 부동산 수석 입지분석가이자 감정평가 전문가 'Gemini AI'이다.\n" +
+                "사용자가 제시한 아파트의 물리적 가치(대지지분, 건물원가, 세대수 로그 버프 Pm)와 시장 호가의 괴리율 알파(α)를 현실 시장 흐름과 예리하게 교차 매칭하여 전문가 등급의 보고서를 기필코 작성해야 한다.\n" +
+                "구글 서치 연동(Grounding)을 전적으로 사용하여 실제 해당 단지 인근의 최근 호재와 실거래 분위기를 반영해 사실에 기초하여 분석해라. 보고서는 고급스럽고 설득력 있는 정형화된 한국어로 작성하라.";
+
+            try {
+                const result = await fetchGeminiWithBackoff(prompt, systemPrompt);
+                clearInterval(captionInterval);
+
+                const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                if (!responseText) {
+                    throw new Error("서버로부터 데이터가 수신되었으나 보고서 본문이 누락되었습니다.");
+                }
+
+                // Render Report output beautifully
+                elAIReportOutput.innerHTML = parseMarkdownToHtml(responseText);
+
+                // Render Grounding citations attributions (Google Grounding)
+                const attributions = result.candidates?.[0]?.groundingMetadata?.groundingAttributions;
+                if (attributions && attributions.length > 0) {
+                    elAICitationsArea.classList.remove("hidden");
+                    elAICitationsList.innerHTML = attributions.map(attr => {
+                        const title = attr.web?.title || attr.web?.uri || "출처 참조";
+                        const uri = attr.web?.uri || "#";
+                        return '<a href="' + uri + '" target="_blank" rel="noopener noreferrer" class="bg-slate-900 hover:bg-indigo-950/40 border border-slate-800 hover:border-indigo-500/40 text-slate-400 hover:text-indigo-300 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition flex items-center gap-1.5 max-w-[200px] truncate select-none">' +
+                            '<i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i><span class="truncate">' + title + '</span></a>';
+                    }).join("");
+                } else {
+                    elAICitationsArea.classList.add("hidden");
+                }
+
+                elAIReportArea.classList.remove("hidden");
+                showToast("[" + aptName + "] 입지 및 투자 타당성 보고서가 무사히 출간되었습니다!", "success");
+
+            } catch (error) {
+                console.error(error);
+                clearInterval(captionInterval);
+                showToast(error.message, "error");
+            } finally {
+                elAILoading.classList.add("hidden");
+                btnGenerateAI.disabled = false;
+            }
+        });
+
+        // Safe temporary elements copying mechanism for Web IFrame restrictions
+        btnCopyAI.addEventListener("click", () => {
+            const textToCopy = elAIReportOutput.innerText;
+            if (!textToCopy) return;
+
+            const textarea = document.createElement("textarea");
+            textarea.value = textToCopy;
+            textarea.style.position = "fixed"; // Keep fixed to avoid scroll jumps
+            document.body.appendChild(textarea);
+            textarea.select();
+            
+            try {
+                document.execCommand("copy");
+                showToast("AI 종합 리포트 텍스트가 클립보드에 무사히 저장되었습니다.", "success");
+            } catch (err) {
+                showToast("복사 작업을 수행할 권한이 유실되었습니다.", "error");
+            }
+            document.body.removeChild(textarea);
+        });
+
+        // ----------------- ✨ Gemini AI Autofill Functionality (Natural Language Search) -----------------
+        btnAIAutofill.addEventListener("click", async () => {
+            if (!checkApiKeyConfigured()) {
+                showToast("실시간 AI 자동 완성 기능을 사용하려면 먼저 Gemini API 키를 등록해 주세요.", "error");
+                modalApiConfig.classList.remove("hidden");
+                return;
+            }
+
+            const aptQuery = elAptName.value.trim();
+            const userSizeType = elSizeType.value.trim();
+
+            if (!aptQuery) {
+                showToast("AI 고속 탐색을 위해 아파트 단지명을 자연어로 입력해 주세요. (예: 마래푸, 자양하늘채 등)", "error");
+                elAptName.focus();
+                return;
+            }
+
+            btnAIAutofill.disabled = true;
+            btnAIAutofillText.textContent = "Gemini AI가 인터넷에서 실시간 검색 중...";
+            showToast(`구글 실시간 검색을 통해 [${aptQuery}] 단지 스펙을 심층 추적합니다.`, "info");
+            writeDebugLog('[AI 자연어 탐색] "' + aptQuery + '" 스펙 조사 가동', false);
+
+            // If user did not type a pyeong target, default to National Pyeong (84㎡ / ~34평형)
+            const targetPyeong = userSizeType ? userSizeType : "국민평형 전용 84㎡ (공급 약 30~34평형)";
+
+            const prompt = "구글 검색(Google Grounding)을 통해 다음 아파트의 최신 실제 부동산 상세 스펙을 정밀히 조사해줘:\n" +
+                "- 아파트 검색어: " + aptQuery + "\n" +
+                "- 희망 평형 타겟: " + targetPyeong + " (만약 희망 평형 타겟이 비어있거나 모호하면, 전용 84㎡ 국민평형 근처 세대의 스펙을 대표값으로 삼아줘.)\n\n" +
+                "조사할 주요 자산 스펙:\n" +
+                "1. 행정 구역 대분류 (반드시 \"서울특별시\", \"경기도\", \"인천광역시\" 중 하나여야 함)\n" +
+                "2. 상세 행정 구역 및 대표 입지명 (상세 가이드: \"마포구 (아현)\", \"연수구 (송도)\", \"강남구 (대치)\", \"성남시 분당구 (판교)\" 등 구/시 명칭 뒤에 대표동 명칭을 괄호안에 넣은 포맷이어야 함. 아래 제공될 지역 리스트 중 하나와 가장 가까운 것으로 매칭해줘)\n" +
+                "3. 평균 대지지분 (단위: 평)\n" +
+                "4. 대표 공급평형 (단위: 평, 예: 34평, 24평 등 실제 대표 평형)\n" +
+                "5. 준공년도 기준 현재 경과연수 (단위: 년차, 현재 2026년 기준 계산)\n" +
+                "6. 총 세대수 (단위: 세대)\n" +
+                "7. 인근 빌라 평당 대지지분 가격 수준 (단위: 만원, 서울 최상급지 8000~13000, 마포/용산/성동 5000~8000, 외곽 및 경기/인천 2000~4500 범위에서 현실적인 가치 수렴)\n" +
+                "8. 현재 대표 공급평형의 네이버 시세 또는 최근 실거래가 평균 수준 (단위: 억, 소수점 첫째자리까지 표시)\n" +
+                "9. 평형 규격 명칭 (예: \"34평형\", \"전용 84㎡\")\n\n" +
+                "지원되는 상세 행정 구역 매핑 리스트:\n" +
+                JSON.stringify(districtMap, null, 2);
+
+            const systemPrompt = "너는 대한민국의 유능한 감정평가사 겸 AI 부동산 분석가이다.\n" +
+                "사용자가 자연어로 입력한 특정 아파트에 대해 실시간 구글 검색(Grounding)을 엄격히 동원하여 사실에 입각한 실제 정보를 취합한 뒤, 반드시 아래 지정된 JSON 규격에 부합하는 단 하나의 JSON 오브젝트만 반환하라.\n" +
+                "다른 설명이나 수사구는 일체 배제하고, 오직 아래 구조의 JSON 텍스트만 출력해야 한다. 마크다운 백틱(\\x60\\x60\\x60json)은 생략해도 좋으나 작성한다면 올바르게 닫아줘.\n\n" +
+                "{\n" +
+                "  \"region\": \"서울특별시\" 또는 \"경기도\" 또는 \"인천광역시\",\n" +
+                "  \"district\": \"구/시 명칭 (괄호안에 법정동/대표단지동)\", (예: \"마포구 (아현)\", \"연수구 (송도)\")\n" +
+                "  \"landArea\": 대지지분 숫자값 (평, 예: 12.5),\n" +
+                "  \"supplySize\": 공급면적 평수 숫자값 (평, 예: 34),\n" +
+                "  \"buildingAge\": 준공 후 경과연수 숫자값 (년차, 예: 12),\n" +
+                "  \"households\": 총 세대수 숫자값 (세대, 예: 2400),\n" +
+                "  \"villaLandPrice\": 인근 빌라 평당 대지지분 가격 숫자값 (만원, 예: 4500),\n" +
+                "  \"marketPrice\": 현재 실거래가/호가 평균 숫자값 (억원, 예: 15.5),\n" +
+                "  \"sizeType\": 대표 평형 규격 텍스트 명칭 (예: \"34평형\")\n" +
+                "}";
+
+            try {
+                // We call the API WITHOUT customConfig containing responseSchema to avoid Grounding conflicts
+                const result = await fetchGeminiWithBackoff(prompt, systemPrompt);
+                const rawJsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (!rawJsonText) {
+                    throw new Error("정보를 찾을 수 없거나 데이터 수집이 지연되고 있습니다.");
+                }
+
+                // Robust parsing function - using hex escapes for safe parsing without breaking markdown blocks
+                let cleaned = rawJsonText.trim();
+                if (cleaned.indexOf("\x60\x60\x60") === 0) {
+                    cleaned = cleaned.replace(/^\x60\x60\x60(?:json)?\s*/i, "").replace(/\x60\x60\x60$/, "").trim();
+                }
+                const startBrace = cleaned.indexOf("{");
+                const endBrace = cleaned.lastIndexOf("}");
+                if (startBrace !== -1 && endBrace !== -1 && endBrace > startBrace) {
+                    cleaned = cleaned.substring(startBrace, endBrace + 1);
+                }
+
+                const data = JSON.parse(cleaned);
+                writeDebugLog("[AI 자연어 검색 결과 수신]: " + cleaned, false);
+
+                // Bind response data safely to slider bounds and inputs
+                elAptName.value = aptQuery; 
+                elSizeType.value = data.sizeType || "34평형 규격";
+                
+                slideLandArea.value = Math.max(1, Math.min(50, data.landArea || 15));
+                slideSupplySize.value = Math.max(10, Math.min(100, data.supplySize || 34));
+                slideBuildingAge.value = Math.max(0, Math.min(60, data.buildingAge || 25));
+                slideVillaPrice.value = Math.max(1000, Math.min(15000, data.villaLandPrice || 3500));
+                slideHouseholds.value = Math.max(10, Math.min(10000, data.households || 1000));
+                slideMarketPrice.value = Math.max(1, Math.min(100, data.marketPrice || 10));
+
+                // 🔄 스마트 행정구역 매핑 동적 바인딩
+                if (districtMap[data.region]) {
+                    elRegion.value = data.region;
+                    populateDistrictOptions();
+                    
+                    const targetDistrict = data.district;
+                    const options = Object.keys(districtMap[data.region] || {});
+                    
+                    // Try exact match first
+                    let matchedDistrict = options.find(opt => opt === targetDistrict);
+                    if (!matchedDistrict) {
+                        // Try substring fuzzy fallback
+                        matchedDistrict = options.find(opt => opt.includes(targetDistrict) || targetDistrict.includes(opt.split(" ")[0]));
+                    }
+                    
+                    if (matchedDistrict) {
+                        elDistrict.value = matchedDistrict;
+                        populateSubDistrictOptions();
+                        // Search subDistrict
+                        const subOptions = districtMap[data.region]?.[matchedDistrict] || [];
+                        let matchedSub = subOptions.find(opt => opt === data.subDistrict);
+                        if (!matchedSub && data.subDistrict) {
+                            matchedSub = subOptions.find(opt => opt.includes(data.subDistrict) || data.subDistrict.includes(opt));
+                        }
+                        if (matchedSub) {
+                            elSubDistrict.value = matchedSub;
+                        }
+                        writeDebugLog('[매핑 완수] 행정구역이 "' + data.region + " " + matchedDistrict + '"으로 자동 설정되었습니다.', false);
+                    } else {
+                        elDistrict.selectedIndex = 0;
+                        populateSubDistrictOptions();
+                        writeDebugLog('[매핑 보정] 상세 지역 매핑이 모호하여 기본값 "' + options[0] + '"으로 대체되었습니다.', false);
+                    }
+                }
+
+                // Recalculate and update views
+                runRealTimeAnalysis();
+                
+                showToast("[" + aptQuery + "]의 실제 등기부 스펙을 완벽하게 동기화했습니다!", "success");
+
+            } catch (err) {
+                console.error(err);
+                showToast(err.message || "실시간 정보 수집 도중 오류가 발생했습니다.", "error");
+                writeDebugLog("[AI 자동완성 에러]: " + err.message, true);
+            } finally {
+                btnAIAutofill.disabled = false;
+                btnAIAutofillText.textContent = "✨ AI 단지 정보 원클릭 자동 완성";
+            }
+        });
+
+        // ----------------- 📦 STREAMING_CHUNK: Initializing Excel parsing and CSV exporting handlers... -----------------
+        
+        // Tab switching UI logic
+        tabBtnExcel.addEventListener("click", () => {
+            tabBtnExcel.className = "px-4 py-2 text-xs font-bold text-indigo-400 border-b-2 border-indigo-500 outline-none";
+            tabBtnAiBulk.className = "px-4 py-2 text-xs font-bold text-slate-400 hover:text-slate-200 outline-none";
+            tabContentExcel.classList.remove("hidden");
+            tabContentAiBulk.classList.add("hidden");
+        });
+
+        tabBtnAiBulk.addEventListener("click", () => {
+            tabBtnAiBulk.className = "px-4 py-2 text-xs font-bold text-indigo-400 border-b-2 border-indigo-500 outline-none";
+            tabBtnExcel.className = "px-4 py-2 text-xs font-bold text-slate-400 hover:text-slate-200 outline-none";
+            tabContentAiBulk.classList.remove("hidden");
+            tabContentExcel.classList.add("hidden");
+        });
+
+        // Drag & Drop handlers
+        dropZone.addEventListener("dragover", (e) => {
+            e.preventDefault();
+            dropZone.classList.add("border-indigo-500", "bg-indigo-950/20");
+        });
+
+        dropZone.addEventListener("dragleave", () => {
+            dropZone.classList.remove("border-indigo-500", "bg-indigo-950/20");
+        });
+
+        dropZone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            dropZone.classList.remove("border-indigo-500", "bg-indigo-950/20");
+            const files = e.dataTransfer.files;
+            if (files.length) {
+                bulkFileInput.files = files;
+                handleBulkFile(files[0]);
+            }
+        });
+
+        dropZone.addEventListener("click", () => {
+            bulkFileInput.click();
+        });
+
+        bulkFileInput.addEventListener("change", (e) => {
+            if (e.target.files.length) {
+                handleBulkFile(e.target.files[0]);
+            }
+        });
+
+        // Downloader Template builder
+        window.downloadExcelTemplate = function() {
+            const headers = ["도_시", "구_시_군", "상세지역_동", "단지명", "평형_타입", "대지지분_평", "공급평형_평", "건축비원가_만원", "연식_년", "인근빌라평당가_만원", "세대수", "시장호가_억원"];
+            const sample1 = ["서울특별시", "마포구", "아현동", "마포래미안푸르지오", "34평형", "12.5", "34", "1000", "12", "6500", "3885", "18.5"];
+            const sample2 = ["경기도", "성남시 분당구", "삼평동", "봇들마을8단지", "34평형", "16.2", "34", "1000", "17", "7500", "462", "20.0"];
+            
+            const rows = [headers, sample1, sample2];
+            let csvContent = "data:text/csv;charset=utf-8,\ufeff" + rows.map(e => e.map(val => `"${val}"`).join(",")).join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", "apt_valuation_bulk_template.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showToast("임포트용 표준 CSV 템플릿 파일이 다운로드되었습니다.", "success");
+        };
+
+        // File parse engine
+        function handleBulkFile(file) {
+            writeDebugLog(`[일괄 파싱 시작] 파일명: ${file.name}`);
+            const reader = new FileReader();
+
+            if (file.name.endsWith(".csv")) {
+                reader.onload = function(e) {
+                    const text = e.target.result;
+                    parseCSV(text);
+                };
+                reader.readAsText(file, "UTF-8");
+            } else {
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, {type: "array"});
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        const rows = XLSX.utils.sheet_to_json(worksheet, {header: 1});
+                        parseMatrixRows(rows);
+                    } catch (err) {
+                        console.error(err);
+                        showToast("엑셀 파일 파싱에 실패했습니다. 올바른 포맷인지 확인해 주세요.", "error");
+                        writeDebugLog(`[엑셀 파싱 에러]: ${err.message}`, true);
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        // CSV parsing fallback helper
+        function parseCSV(text) {
+            const rows = [];
+            const lines = text.split("\n");
+            lines.forEach(line => {
+                if (!line.trim()) return;
+                // Simple CSV splitter supporting quotes
+                const cells = [];
+                let insideQuote = false;
+                let currentCell = "";
+                for (let i = 0; i < line.length; i++) {
+                    const char = line[i];
+                    if (char === '"') {
+                        insideQuote = !insideQuote;
+                    } else if (char === ',' && !insideQuote) {
+                        cells.push(currentCell.trim());
+                        currentCell = "";
+                    } else {
+                        currentCell += char;
+                    }
+                }
+                cells.push(currentCell.trim());
+                rows.push(cells);
+            });
+            parseMatrixRows(rows);
+        }
+
+        // Common parsed rows compiler (Excel and CSV standardizer)
+        function parseMatrixRows(rows) {
+            if (rows.length < 2) {
+                showToast("불러온 파일 내 유의미한 레코드 행이 존재하지 않습니다.", "error");
+                return;
+            }
+
+            // Headers are on rows[0]. Let's match column maps.
+            const headers = rows[0].map(h => h ? h.toString().trim() : "");
+            
+            const colMap = {
+                region: headers.findIndex(h => h.includes("도_시")),
+                district: headers.findIndex(h => h.includes("구_시_군")),
+                subDistrict: headers.findIndex(h => h.includes("상세지역_동")),
+                name: headers.findIndex(h => h.includes("단지명")),
+                sizeType: headers.findIndex(h => h.includes("평형_타입")),
+                landArea: headers.findIndex(h => h.includes("대지지분_평")),
+                supplySize: headers.findIndex(h => h.includes("공급평형_평")),
+                constructionPrice: headers.findIndex(h => h.includes("건축비원가_만원")),
+                buildingAge: headers.findIndex(h => h.includes("연식_년")),
+                villaLandPrice: headers.findIndex(h => h.includes("인근빌라평당가_만원")),
+                households: headers.findIndex(h => h.includes("세대수")),
+                marketPrice: headers.findIndex(h => h.includes("시장호가_억원"))
+            };
+
+            // Validate mapped columns
+            if (colMap.region === -1 || colMap.district === -1 || colMap.name === -1) {
+                showToast("필수 헤더가 누락되었습니다. 다운로드한 표준 템플릿 형식을 다시 확인해 주세요.", "error");
+                return;
+            }
+
+            const candidates = [];
+            for (let i = 1; i < rows.length; i++) {
+                const row = rows[i];
+                if (row.length === 0 || !row[colMap.name]) continue;
+
+                const region = row[colMap.region] ? row[colMap.region].toString().trim() : "서울특별시";
+                const district = row[colMap.district] ? row[colMap.district].toString().trim() : "";
+                const subDistrict = row[colMap.subDistrict] ? row[colMap.subDistrict].toString().trim() : "";
+                const name = row[colMap.name].toString().trim();
+                const sizeType = row[colMap.sizeType] ? row[colMap.sizeType].toString().trim() : "34평형";
+
+                const landArea = parseFloat(row[colMap.landArea]) || 15;
+                const supplySize = parseFloat(row[colMap.supplySize]) || 34;
+                const constructionPrice = parseInt(row[colMap.constructionPrice]) || 1000;
+                const buildingAge = parseInt(row[colMap.buildingAge]) || 10;
+                const villaLandPrice = parseInt(row[colMap.villaLandPrice]) || 3500;
+                const households = parseInt(row[colMap.households]) || 1000;
+                const marketPrice = parseFloat(row[colMap.marketPrice]) || 10;
+
+                candidates.push({
+                    author: "일괄임포터",
+                    region, district, subDistrict, name, sizeType,
+                    landArea, supplySize, constructionPrice, buildingAge, villaLandPrice, households, marketPrice
+                });
+            }
+
+            if (candidates.length === 0) {
+                showToast("유효한 아파트 레코드를 찾지 못했습니다.", "error");
+                return;
+            }
+
+            bulkPreviewData = candidates;
+            renderBulkPreview();
+            showToast(`${candidates.length}건의 자산 임포트 대기열이 성공적으로 구성되었습니다.`, "success");
+        }
+
+        // Render Bulk preview table
+        function renderBulkPreview() {
+            bulkPreviewTbody.innerHTML = "";
+            bulkPreviewCount.textContent = bulkPreviewData.length;
+            bulkPreviewArea.classList.remove("hidden");
+
+            bulkPreviewData.forEach(item => {
+                // Read defaults weights or live ones
+                const sWeight = parseFloat(slideScaleWeight.value);
+                const cRatio = parseFloat(slideContractRatio.value);
+                const rFloor = parseFloat(slideResidualFloor.value);
+
+                const calc = calculateValuation(
+                    item.landArea, item.supplySize, item.constructionPrice, 
+                    item.buildingAge, item.villaLandPrice, item.households, item.marketPrice,
+                    sWeight, cRatio, rFloor
+                );
+
+                let badge = "⚖️ 적정";
+                let badgeClass = "text-sky-400";
+                if (calc.alphaPercent < -5) {
+                    badge = "🛡️ 저평가";
+                    badgeClass = "text-emerald-400";
+                } else if (calc.alphaPercent > 15) {
+                    badge = "🚨 거품";
+                    badgeClass = "text-rose-400";
+                }
+
+                const tr = document.createElement("tr");
+                tr.className = "border-b border-slate-850 hover:bg-slate-900/20";
+                tr.innerHTML = `
+                    <td class="py-2 px-3 text-slate-400">${item.region}</td>
+                    <td class="py-2 px-3 text-slate-300 font-semibold">${item.district}</td>
+                    <td class="py-2 px-3 text-slate-400">${item.subDistrict || ''}</td>
+                    <td class="py-2 px-3 text-slate-200 font-bold">${item.name} <span class="text-[9px] text-slate-500 font-normal">(${item.sizeType})</span></td>
+                    <td class="py-2 px-3 text-right font-mono text-emerald-400">${item.landArea.toFixed(1)}평</td>
+                    <td class="py-2 px-3 text-right font-mono">${item.supplySize}평</td>
+                    <td class="py-2 px-3 text-right font-mono">${item.buildingAge}년</td>
+                    <td class="py-2 px-3 text-right font-mono">${item.households.toLocaleString()}</td>
+                    <td class="py-2 px-3 text-right font-mono text-purple-400 font-bold">${item.marketPrice.toFixed(1)}억</td>
+                    <td class="py-2 px-3 text-right font-mono text-indigo-400 font-bold">${calc.modelVal.toFixed(1)}억</td>
+                    <td class="py-2 px-3 text-center ${badgeClass} font-black">${badge}</td>
+                `;
+                bulkPreviewTbody.appendChild(tr);
+            });
+        }
+
+        // Clear preview area
+        btnClearPreview.addEventListener("click", () => {
+            bulkPreviewData = [];
+            bulkPreviewArea.classList.add("hidden");
+            bulkFileInput.value = "";
+            aiBulkTextarea.value = "";
+            showToast("임포트 대기열 후보군이 소멸되었습니다.", "info");
+        });
+
+        // ----------------- ✨ STREAMING_CHUNK: Developing Gemini bulk search logic with search grounding... -----------------
+        
+        // AI Bulk Engine Generation Trigger
+        btnRunAiBulk.addEventListener("click", async () => {
+            if (!checkApiKeyConfigured()) {
+                showToast("벌크 자동 수집을 기동하기 위해 먼저 Gemini API 키를 등록해 주세요.", "error");
+                modalApiConfig.classList.remove("hidden");
+                return;
+            }
+
+            const listText = aiBulkTextarea.value.trim();
+            if (!listText) {
+                showToast("수집 대상 단지명을 최소 1개 이상 줄바꿈이나 쉼표로 나열해 입력해 주세요.", "error");
+                aiBulkTextarea.focus();
+                return;
+            }
+
+            btnRunAiBulk.disabled = true;
+            aiBulkLoading.classList.remove("hidden");
+            writeDebugLog(`[AI 벌크 가동] 대상 아파트 목록 수집 개시`);
+
+            const prompt = "구글 검색(Google Grounding)을 통해 다음 아파트 리스트의 최신 상세 스펙을 정밀히 조사해서 JSON array 형식으로 반환해줘:\n" +
+                "대상 아파트 리스트:\n" + listText + "\n\n" +
+                "각 아파트마다 아래의 키값을 가진 JSON 객체를 만들어 배열로 묶어줘:\n" +
+                "{\n" +
+                "  \"region\": \"서울특별시\" 또는 \"경기도\" 또는 \"인천광역시\",\n" +
+                "  \"district\": \"구/시/군 명칭\", (예: \"마포구\", \"성남시 분당구\")\n" +
+                "  \"subDistrict\": \"상세지역_동 명칭\", (예: \"아현동\", \"판교동\")\n" +
+                "  \"name\": \"아파트 단지명\",\n" +
+                "  \"sizeType\": \"대표 평형 규격\" (예: \"34평형\", 비어있을 시 국민평형 전용 84㎡ 기준),\n" +
+                "  \"landArea\": 대지지분 숫자값 (평),\n" +
+                "  \"supplySize\": 공급면적 평수 숫자값 (평, 예: 34),\n" +
+                "  \"buildingAge\": 준공 후 경과연수 숫자값 (년차, 예: 12),\n" +
+                "  \"households\": 총 세대수 숫자값 (세대),\n" +
+                "  \"villaLandPrice\": 인근 빌라 평당 대지지분 가격 숫자값 (만원),\n" +
+                "  \"marketPrice\": 현재 매매 호가 또는 최근 실거래가 평균 숫자값 (억원)\n" +
+                "}\n\n" +
+                "반드시 아래의 정형화된 행정구역 매핑 구조를 참고하여 'region', 'district', 'subDistrict'를 정확하게 매치시켜야 해:\n" +
+                JSON.stringify(districtMap, null, 2);
+
+            const systemPrompt = "너는 대한민국의 유능한 감정평가사 겸 AI 부동산 분석가이다.\n" +
+                "사용자가 자연어로 입력한 아파트 목록에 대해 실시간 구글 검색(Grounding)을 전면 동원하여 실제 데이터 스펙을 취합한 뒤, 반드시 아래 지정된 JSON 규격과 부합하는 구조화된 오브젝트 배열로만 반환하라.\n" +
+                "다른 설명이나 수사구는 일체 배제하고, 오직 하나의 JSON Array String만 직접 출력해야 한다. 마크다운 백틱(\\x60\\x60\\x60json)은 생략해도 좋으나 작성한다면 올바르게 닫아줘.";
+
+            try {
+                const result = await fetchGeminiWithBackoff(prompt, systemPrompt);
+                const rawJsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
+                
+                if (!rawJsonText) {
+                    throw new Error("정보를 찾을 수 없거나 데이터 수집이 지연되고 있습니다.");
+                }
+
+                // Robust parsing function - using hex escapes for safe parsing without breaking markdown blocks
+                let cleaned = rawJsonText.trim();
+                if (cleaned.indexOf("\x60\x60\x60") === 0) {
+                    cleaned = cleaned.replace(/^\x60\x60\x60(?:json)?\s*/i, "").replace(/\x60\x60\x60$/, "").trim();
+                }
+                const startBrace = cleaned.indexOf("[");
+                const endBrace = cleaned.lastIndexOf("]");
+                if (startBrace !== -1 && endBrace !== -1 && endBrace > startBrace) {
+                    cleaned = cleaned.substring(startBrace, endBrace + 1);
+                }
+
+                const dataList = JSON.parse(cleaned);
+                if (!Array.isArray(dataList)) {
+                    throw new Error("Gemini AI 응답이 유효한 배열 형식이 아닙니다.");
+                }
+
+                writeDebugLog(`[AI 벌크 조사 완료]: 수집 데이터 수신 성공`);
+                
+                const compiled = dataList.map(item => {
+                    return {
+                        author: "AI벌크수집가",
+                        region: item.region || "서울특별시",
+                        district: item.district || "구역미상",
+                        subDistrict: item.subDistrict || "",
+                        name: item.name || "단지명미상",
+                        sizeType: item.sizeType || "34평형",
+                        landArea: parseFloat(item.landArea) || 15,
+                        supplySize: parseInt(item.supplySize) || 34,
+                        constructionPrice: 1000,
+                        buildingAge: parseInt(item.buildingAge) || 15,
+                        villaLandPrice: parseInt(item.villaLandPrice) || 3500,
+                        households: parseInt(item.households) || 1000,
+                        marketPrice: parseFloat(item.marketPrice) || 10
+                    };
+                });
+
+                bulkPreviewData = compiled;
+                renderBulkPreview();
+                showToast(`Gemini AI가 성공적으로 ${compiled.length}개 단지의 원천 등기 정보 분석을 끝마쳤습니다!`, "success");
+
+            } catch (err) {
+                console.error(err);
+                showToast(err.message || "실시간 벌크 수집 도중 오류가 발생했습니다.", "error");
+                writeDebugLog(`[AI 벌크 수집 에러]: ${err.message}`, true);
+            } finally {
+                btnRunAiBulk.disabled = false;
+                aiBulkLoading.classList.add("hidden");
+            }
+        });
+
+        // ----------------- ✨ STREAMING_CHUNK: Integrating Firestore bulk write and logging pipelines... -----------------
+        
+        // Bulk committing action into Firebase or Local Storage
+        btnCommitBulk.addEventListener("click", async () => {
+            if (bulkPreviewData.length === 0) {
+                showToast("업로드할 대기 데이터가 존재하지 않습니다.", "error");
+                return;
+            }
+
+            const proc = await showCustomConfirm(
+                "대량 자산 일괄 DB 업로드",
+                `현재 검증이 끝난 대기 후보군 자산 총 ${bulkPreviewData.length}건의 데이터를 공용 대장에 전송 및 백업할까요?`
+            );
+            if (!proc) return;
+
+            writeDebugLog(`[일괄 저장 개시] 총 ${bulkPreviewData.length}건 전송 시작`);
+            showToast("일괄 네트워크 수록 가동 중... 잠시만 대기해 주세요.", "info");
+
+            const sWeight = parseFloat(slideScaleWeight.value);
+            const cRatio = parseFloat(slideContractRatio.value);
+            const rFloor = parseFloat(slideResidualFloor.value);
+
+            let successCount = 0;
+            
+            for (let i = 0; i < bulkPreviewData.length; i++) {
+                const item = bulkPreviewData[i];
+                // Append advanced weights settings dynamically into the saved doc to preserve simulation state
+                const payload = {
+                    ...item,
+                    scaleWeight: sWeight,
+                    contractRatio: cRatio,
+                    residualFloor: rFloor
+                };
+
+                if (useFirebase) {
+                    try {
+                        const docRef = await addDoc(apartmentsCollection, payload);
+                        
+                        // Add logging snap (Strict Path Rule 1)
+                        await addDoc(logsCollection, {
+                            action: "CREATE_BULK",
+                            targetId: docRef.id,
+                            aptName: item.name,
+                            sizeType: item.sizeType,
+                            author: "일괄임포터",
+                            timestamp: new Date().toISOString(),
+                            snapshot: payload
+                        });
+
+                        successCount++;
+                    } catch (e) {
+                        console.error(e);
+                        writeDebugLog(`[전송 오류]: ${item.name} 수록 실패 - ${e.message}`, true);
+                    }
+                } else {
+                    // Local Storage fallback sequentially
+                    let userList = [];
+                    const stored = localStorage.getItem("apt_local_backup_data");
+                    if (stored) {
+                        try { userList = JSON.parse(stored); } catch(e) {}
+                    }
+                    payload.id = `user-${Date.now()}-${i}`;
+                    userList.push(payload);
+                    localStorage.setItem("apt_local_backup_data", JSON.stringify(userList));
+                    successCount++;
+                }
+            }
+
+            showToast(`총 ${successCount}건의 일괄 자산 수록 처리가 무사히 끝마쳤습니다!`, "success");
+            writeDebugLog(`[일괄 저장 완수] 성공 수량: ${successCount}/${bulkPreviewData.length}`);
+            
+            // Clear preview
+            bulkPreviewData = [];
+            bulkPreviewArea.classList.add("hidden");
+            bulkFileInput.value = "";
+            aiBulkTextarea.value = "";
+
+            if (!useFirebase) {
+                loadLocalStorageFallback();
+            }
+        });
+
+        // ----------------- [이하 기존 시뮬레이터 원천 로직 완벽 연계] -----------------
+        
+        // Sort Table Header Click Binding
+        window.sortTable = function(key) {
+            if (currentSortKey === key) {
+                currentSortOrder = currentSortOrder === "asc" ? "desc" : "asc";
+            } else {
+                currentSortKey = key;
+                currentSortOrder = "desc";
+            }
+            renderMatrixTable();
+        };
+
+        window.loadItemToEditor = function(id) {
+            const item = appData.find(i => i.id === id);
+            if (!item) return;
+
+            currentEditingId = item.id;
+
+            elRegion.value = item.region;
+            populateDistrictOptions();
+            elDistrict.value = item.district;
+            populateSubDistrictOptions();
+            elSubDistrict.value = item.subDistrict || "";
+            elAptName.value = item.name;
+            elSizeType.value = item.sizeType;
+            elAuthor.value = item.author || "비공개";
+
+            slideLandArea.value = item.landArea;
+            slideSupplySize.value = item.supplySize;
+            slideConstPrice.value = item.constructionPrice || 1000;
+            slideBuildingAge.value = item.buildingAge;
+            slideVillaPrice.value = item.villaLandPrice || 3500;
+            slideHouseholds.value = item.households;
+            slideMarketPrice.value = item.marketPrice;
+
+            // Load advanced weights safely with defaults fallback
+            slideScaleWeight.value = item.scaleWeight !== undefined ? item.scaleWeight : 0.35;
+            slideContractRatio.value = item.contractRatio !== undefined ? item.contractRatio : 1.40;
+            slideResidualFloor.value = item.residualFloor !== undefined ? item.residualFloor : 20;
+
+            runRealTimeAnalysis();
+
+            editIndicator.classList.remove("hidden");
+            btnSaveText.textContent = "⚠️ 선택 단지 정보 수정 반영";
+            btnSave.className = "w-full bg-gradient-to-r from-rose-600 to-amber-600 hover:from-rose-500 hover:to-amber-500 text-white py-3 rounded-xl font-bold text-sm transition duration-300 shadow-lg shadow-rose-600/20 active:scale-95 flex items-center justify-center gap-2";
+
+            showToast(`[${item.name}] 정보가 슬라이더에 성공적으로 동기화되었습니다.`, "success");
+            window.scrollTo({ top: 0, behavior: "smooth" });
+        };
+
+        // Custom save CRUD function supporting Logging (Strict manual checks applied during SAVE)
+        btnSave.addEventListener("click", async () => {
+            const author = elAuthor.value.trim();
+            const name = elAptName.value.trim();
+            const sizeType = elSizeType.value.trim() || "34평형";
+            const region = elRegion.value;
+            const district = elDistrict.value;
+            const subDistrict = elSubDistrict.value;
+
+            // Manual adjustment validator checks
+            if (!author || author === "" || author === "비공개") {
+                showToast("수동 저장 시에는 감사 로그 기록을 위해 작성자 닉네임을 꼭 입력해 주셔야 합니다.", "error");
+                elAuthor.focus();
+                return;
+            }
+
+            if (!region || !district || !subDistrict) {
+                showToast("수동 저장 시에는 아파트의 정확한 행정구역(시·도 및 시·군·구 및 상세 동)을 설정해 주셔야 합니다.", "error");
+                elRegion.focus();
+                return;
+            }
+
+            if (!name) {
+                showToast("아파트 단지 이름을 바르게 기입하세요.", "error");
+                elAptName.focus();
+                return;
+            }
+
+            const payload = {
+                author: author,
+                region: region,
+                district: district,
+                subDistrict: subDistrict,
+                name: name,
+                sizeType: sizeType,
+                landArea: parseFloat(slideLandArea.value),
+                supplySize: parseInt(slideSupplySize.value),
+                constructionPrice: parseInt(slideConstPrice.value),
+                buildingAge: parseInt(slideBuildingAge.value),
+                villaLandPrice: parseInt(slideVillaPrice.value),
+                households: parseInt(slideHouseholds.value),
+                marketPrice: parseFloat(slideMarketPrice.value),
+                // Saved with advanced weights configurations
+                scaleWeight: parseFloat(slideScaleWeight.value),
+                contractRatio: parseFloat(slideContractRatio.value),
+                residualFloor: parseFloat(slideResidualFloor.value)
             };
 
             const confirmProc = await showCustomConfirm(
@@ -1341,12 +2651,12 @@
                         targetDocId = currentEditingId;
                         const docRef = doc(db, "artifacts", "apt-real-price", "public", "data", "apartments", currentEditingId);
                         await updateDoc(docRef, payload);
-                        writeDebugLog(`[${name}] 문서 수정 성공. ID: ${targetDocId}`);
+                        writeDebugLog(`[${name}] 문서 수정 성공. ID: ${targetDocId}`, false);
                     } else {
                         // Create brand new doc
                         const docRef = await addDoc(apartmentsCollection, payload);
                         targetDocId = docRef.id;
-                        writeDebugLog(`[${name}] 신규 문서 추가 완료. ID: ${targetDocId}`);
+                        writeDebugLog(`[${name}] 신규 문서 추가 완료. ID: ${targetDocId}`, false);
                     }
 
                     // Log audit snap to logs collection (Strict Path Rule 1)
@@ -1376,9 +2686,9 @@
                 }
 
                 if (currentEditingId && !currentEditingId.startsWith("static-")) {
-                    userList = userList.map(item => item.id === currentEditingId ? { ...item, ...payload } : item);
+                    userList = userList.map(item => item.id === currentEditingId ? Object.assign({}, item, payload) : item);
                 } else {
-                    payload.id = `user-${Date.now()}`;
+                    payload.id = "user-" + Date.now();
                     userList.push(payload);
                 }
 
@@ -1436,15 +2746,6 @@
             }
         };
 
-        function resetEditorState() {
-            currentEditingId = null;
-            elAptName.value = "";
-            elSizeType.value = "";
-            editIndicator.classList.add("hidden");
-            btnSaveText.textContent = "현재 조건 예시로 등록 / 저장";
-            btnSave.className = "w-full bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white py-3 rounded-xl font-bold text-sm transition duration-300 shadow-lg shadow-indigo-600/20 active:scale-95 flex items-center justify-center gap-2";
-        }
-
         // Audit Trail Rollback Engine
         window.restoreLogSnapshot = async function(logId) {
             const logItem = logData.find(l => l.id === logId);
@@ -1491,394 +2792,6 @@
             }
         };
 
-        // Render History Log cards
-        function renderHistoryLogs() {
-            historyLogsContainer.innerHTML = "";
-            
-            if (logData.length === 0) {
-                historyLogsContainer.innerHTML = `<div class="text-center py-12 text-slate-500 text-xs">서버에서 아직 생성된 로그 트레일이 존재하지 않습니다.</div>`;
-                return;
-            }
-
-            logData.forEach(log => {
-                let badgeClass = "";
-                if (log.action === "CREATE") badgeClass = "bg-emerald-500/10 text-emerald-400 border-emerald-500/20";
-                else if (log.action === "UPDATE") badgeClass = "bg-amber-500/10 text-amber-400 border-amber-500/20";
-                else if (log.action === "DELETE") badgeClass = "bg-rose-500/10 text-rose-400 border-rose-500/20";
-                else badgeClass = "bg-indigo-500/10 text-indigo-400 border-indigo-500/20";
-
-                const dateStr = new Date(log.timestamp).toLocaleString();
-                const card = document.createElement("div");
-                card.className = "bg-slate-950/60 p-4 rounded-xl border border-slate-850 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 hover:border-slate-800 transition";
-                
-                card.innerHTML = `
-                    <div class="flex flex-col gap-1 text-xs">
-                        <div class="flex items-center gap-2">
-                            <span class="px-2 py-0.5 rounded text-[9px] font-black border ${badgeClass}">${log.action}</span>
-                            <span class="text-slate-200 font-extrabold text-[13px]">${log.aptName}</span>
-                            <span class="text-slate-500 text-[10px]">${log.sizeType || ''}</span>
-                        </div>
-                        <div class="text-slate-400 mt-1">
-                            수행인: <span class="text-indigo-300 font-semibold">${log.author}</span> | 
-                            타임라인: <span class="text-slate-500">${dateStr}</span>
-                        </div>
-                    </div>
-                    <button onclick="restoreLogSnapshot('${log.id}')" class="shrink-0 text-[10px] font-bold bg-indigo-600/15 hover:bg-indigo-600 text-indigo-400 hover:text-white px-3 py-1.5 rounded border border-indigo-500/25 transition">
-                        <i class="fa-solid fa-clock-rotate-left mr-1"></i> 이 시점으로 가치 복구
-                    </button>
-                `;
-                historyLogsContainer.appendChild(card);
-            });
-        }
-
-        // History modal listeners
-        btnShowHistory.addEventListener("click", () => {
-            renderHistoryLogs();
-            modalHistory.classList.remove("hidden");
-        });
-
-        btnCloseHistory.addEventListener("click", () => {
-            modalHistory.classList.add("hidden");
-        });
-
-        // Close modal on outer click
-        modalHistory.addEventListener("click", (e) => {
-            if (e.target === modalHistory) modalHistory.classList.add("hidden");
-        });
-
-        // ----------------- ✨ Gemini API Integration & AI Reports -----------------
-        
-        // Simple Markdown parsing replacement engine inside single-file iFrame limits
-        function parseMarkdownToHtml(md) {
-            if (!md) return "";
-            let html = md
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                // Headers
-                .replace(/^### (.*$)/gim, '<h5 class="text-sm font-bold text-sky-400 mt-4 mb-2">$1</h5>')
-                .replace(/^## (.*$)/gim, '<h4 class="text-base font-extrabold text-indigo-300 mt-5 mb-3 border-b border-slate-800 pb-1 flex items-center gap-1.5"><i class="fa-solid fa-circle-check text-[10px] text-indigo-400"></i> $1</h4>')
-                .replace(/^# (.*$)/gim, '<h3 class="text-lg font-black text-white mt-6 mb-4">$1</h3>')
-                // Bold text
-                .replace(/\*\*(.*?)\*\"/g, '<strong class="text-white font-bold">$1</strong>')
-                .replace(/\*\*(.*?)\*\"/g, '<strong class="text-white font-bold">$1</strong>')
-                .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-bold">$1</strong>')
-                // Bullet list elements
-                .replace(/^\s*[\-\*]\s*(.*$)/gim, '<li class="ml-4 list-disc text-slate-300 my-1">$1</li>')
-                // Paragraph processing (double newlines)
-                .split('\n\n').map(p => {
-                    if (p.trim().startsWith('<h') || p.trim().startsWith('<li')) return p;
-                    return `<p class="my-2.5 text-slate-300 leading-relaxed">${p}</p>`;
-                }).join('\n');
-            return html;
-        }
-
-        // Fetch using Exponential Backoff (Up to 5 Retries)
-        async function fetchGeminiWithBackoff(prompt, systemPrompt, customConfig = null) {
-            const apiKey = getActiveApiKey();
-            if (!apiKey) {
-                throw new Error("Gemini API 키가 설정되어 있지 않습니다. 우측 상단 '🔑 API 설정'을 통해 개인 키를 입력해 주세요.");
-            }
-            
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-            const payload = {
-                contents: [{ parts: [{ text: prompt }] }],
-                systemInstruction: { parts: [{ text: systemPrompt }] },
-                tools: [{ "google_search": {} }] // Enable Google Search grounding dynamically
-            };
-
-            if (customConfig) {
-                payload.generationConfig = customConfig;
-            }
-
-            let delay = 1000;
-            for (let attempt = 1; attempt <= 5; attempt++) {
-                try {
-                    const response = await fetch(url, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(payload)
-                    });
-                    if (response.ok) {
-                        return await response.json();
-                    }
-                } catch (err) {
-                    // Fail silently and defer to retry logic without polluting console
-                }
-                await new Promise(resolve => setTimeout(resolve, delay));
-                delay *= 2;
-            }
-            throw new Error("서버 및 인프라 연동 상태가 혼잡합니다. 잠시 후 보고서 생성을 다시 작동해 주세요.");
-        }
-
-        // Trigger AI Diagnosis Report Generation
-        btnGenerateAI.addEventListener("click", async () => {
-            if (!checkApiKeyConfigured()) {
-                showToast("AI 진단을 시작하기 위해 먼저 Gemini API 키를 등록해 주세요.", "error");
-                modalApiConfig.classList.remove("hidden");
-                return;
-            }
-
-            const region = elRegion.value;
-            const district = elDistrict.value;
-            const aptName = elAptName.value.trim();
-            const sizeType = elSizeType.value.trim() || "34평형 규격";
-
-            if (!aptName) {
-                showToast("AI 진단을 시작하기 위해 먼저 단지명을 바르게 입력해 주세요.", "error");
-                elAptName.focus();
-                return;
-            }
-
-            const calc = currentCalculation;
-            if (!calc) {
-                showToast("시뮬레이터 가치 연산에 오류가 발견되었습니다.", "error");
-                return;
-            }
-
-            // Hide old outputs & show loaders with dynamic captions
-            elAIReportArea.classList.add("hidden");
-            elAILoading.classList.remove("hidden");
-            btnGenerateAI.disabled = true;
-
-            const loadingCaptions = [
-                "🔍 인근 지역 실시간 개발 호재 및 시세 탐색 중...",
-                "📊 감정평가 이론 내재가치와 괴리 요인(알파) 해석 중...",
-                "🔮 거시경제 요인을 감안한 향후 5개년 투자 타당성 연산 중...",
-                "✍️ 최고급 가치 진단 리포트 활자 인쇄 중..."
-            ];
-            
-            let captionIndex = 0;
-            elAILoadingStatus.textContent = loadingCaptions[0];
-            const captionInterval = setInterval(() => {
-                captionIndex = (captionIndex + 1) % loadingCaptions.length;
-                elAILoadingStatus.textContent = loadingCaptions[captionIndex];
-            }, 2200);
-
-            // Construct Gemini dynamic prompt variables
-            const prompt = `
-            분석 아파트 주요 스펙:
-            - 행정 구역: ${region} ${district}
-            - 단지 명칭: ${aptName} (${sizeType})
-            - 보유 대지지분: ${slideLandArea.value} 평 (인근 빌라 대지 평당 기준가: ${slideVillaPrice.value} 만원)
-            - 계약면적 환산 공급 규모: ${slideSupplySize.value} 평 (계약 면적: ${(parseFloat(slideSupplySize.value) * 1.4).toFixed(1)} 평)
-            - 평당 계약 건축비: ${slideConstPrice.value} 만원
-            - 단지 세대수 규모: ${slideHouseholds.value} 세대 (Pm 세대수 가중치: ${calc.premiumMul.toFixed(2)}배)
-            - 경과연수 (연식): ${slideBuildingAge.value} 년 (건물 물리 상각 잔존율: ${calc.ageFactor.toFixed(2)}배)
-
-            시뮬레이터 연산 데이터:
-            - 수학적 이론 내재가치: ${calc.modelVal.toFixed(2)} 억 원
-            - 현재 시장 매매 호가: ${calc.alpha >= 0 ? '과열' : '안전마진'} 조절가 ${parseFloat(slideMarketPrice.value).toFixed(2)} 억 원
-            - 시장 가격 편차(알파, 거품 격차): ${calc.alpha.toFixed(2)} 억 원 (편차 비율: ${calc.alphaPercent.toFixed(1)}%)
-            - 시뮬레이터 판정: ${outAlphaStatus.textContent}
-
-            실시간 구글 검색(Google Grounding) 최신 정보를 바탕으로 아래 항목들을 신뢰도 높게 고찰하여 마크다운 리포트로 출력해 줘:
-            1. [입지 및 정주 인프라 정밀 진단] (교통 접근성, 학군 메리트, 주요 직주근접 및 호재 결합)
-            2. [수학적 내재가치와 시장가의 괴리 원인 분석] (우리가 산정한 이론 가치와 시장 호가 사이의 알파가 단순 거품인지, 아니면 미래 가치(재건축 가능성, 독보적 프리미엄)를 선반영한 무형의 자산 가치인지 논평)
-            3. [향후 5개년 투자 매력도 및 추천 등급] (보수적 금리 여건을 감안한 투자 가치 및 1~10점 척도의 가치 보존성 점수 제시)
-            `;
-
-            const systemPrompt = `
-            너는 대한민국 최고의 권위를 자랑하는 서울, 경기, 인천 권역 전용 부동산 수석 입지분석가이자 감정평가 전문가 'Gemini AI'이다.
-            사용자가 제시한 아파트의 물리적 가치(대지지분, 건물원가, 세대수 로그 버프 Pm)와 시장 호가의 괴리율 알파(α)를 현실 시장 흐름과 예리하게 교차 매칭하여 전문가 등급의 보고서를 기필코 작성해야 한다.
-            구글 서치 연동(Grounding)을 전적으로 사용하여 실제 해당 단지 인근의 최근 호재와 실거래 분위기를 반영해 사실에 기초하여 분석해라. 보고서는 고급스럽고 설득력 있는 정형화된 한국어로 작성하라.
-            `;
-
-            try {
-                const result = await fetchGeminiWithBackoff(prompt, systemPrompt);
-                clearInterval(captionInterval);
-
-                const responseText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                if (!responseText) {
-                    throw new Error("서버로부터 데이터가 수신되었으나 보고서 본문이 누락되었습니다.");
-                }
-
-                // Render Report output beautifully
-                elAIReportOutput.innerHTML = parseMarkdownToHtml(responseText);
-
-                // Render Grounding citations attributions (Google Grounding)
-                const attributions = result.candidates?.[0]?.groundingMetadata?.groundingAttributions;
-                if (attributions && attributions.length > 0) {
-                    elAICitationsArea.classList.remove("hidden");
-                    elAICitationsList.innerHTML = attributions.map(attr => {
-                        const title = attr.web?.title || attr.web?.uri || "출처 참조";
-                        const uri = attr.web?.uri || "#";
-                        return `
-                            <a href="${uri}" target="_blank" rel="noopener noreferrer" class="bg-slate-900 hover:bg-indigo-950/40 border border-slate-800 hover:border-indigo-500/40 text-slate-400 hover:text-indigo-300 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold transition flex items-center gap-1.5 max-w-[200px] truncate select-none">
-                                <i class="fa-solid fa-arrow-up-right-from-square text-[8px]"></i>
-                                <span class="truncate">${title}</span>
-                            </a>
-                        `;
-                    }).join("");
-                } else {
-                    elAICitationsArea.classList.add("hidden");
-                }
-
-                elAIReportArea.classList.remove("hidden");
-                showToast(`[${aptName}] 입지 및 투자 타당성 보고서가 무사히 출간되었습니다!`, "success");
-
-            } catch (error) {
-                console.error(error);
-                clearInterval(captionInterval);
-                showToast(error.message, "error");
-            } finally {
-                elAILoading.classList.add("hidden");
-                btnGenerateAI.disabled = false;
-            }
-        });
-
-        // Safe temporary elements copying mechanism for Web IFrame restrictions
-        btnCopyAI.addEventListener("click", () => {
-            const textToCopy = elAIReportOutput.innerText;
-            if (!textToCopy) return;
-
-            const textarea = document.createElement("textarea");
-            textarea.value = textToCopy;
-            textarea.style.position = "fixed"; // Keep fixed to avoid scroll jumps
-            document.body.appendChild(textarea);
-            textarea.select();
-            
-            try {
-                document.execCommand("copy");
-                showToast("AI 종합 리포트 텍스트가 클립보드에 무사히 저장되었습니다.", "success");
-            } catch (err) {
-                showToast("복사 작업을 수행할 권한이 유실되었습니다.", "error");
-            }
-            document.body.removeChild(textarea);
-        });
-
-        // ----------------- ✨ Gemini AI Autofill Functionality (Natural Language Search) -----------------
-        btnAIAutofill.addEventListener("click", async () => {
-            if (!checkApiKeyConfigured()) {
-                showToast("실시간 AI 자동 완성 기능을 사용하려면 먼저 Gemini API 키를 등록해 주세요.", "error");
-                modalApiConfig.classList.remove("hidden");
-                return;
-            }
-
-            const aptQuery = elAptName.value.trim();
-            const userSizeType = elSizeType.value.trim();
-
-            if (!aptQuery) {
-                showToast("AI 고속 탐색을 위해 아파트 단지명을 자연어로 입력해 주세요. (예: 마래푸, 자양하늘채 등)", "error");
-                elAptName.focus();
-                return;
-            }
-
-            btnAIAutofill.disabled = true;
-            btnAIAutofillText.textContent = "Gemini AI가 자연어 맥락 탐색 중...";
-            showToast(`구글 실시간 검색을 통해 [${aptQuery}] 단지 스펙을 심층 추적합니다.`, "info");
-            writeDebugLog(`[AI 자연어 탐색] "${aptQuery}" 스펙 조사 가동`);
-
-            // If user did not type a pyeong target, default to National Pyeong (84㎡ / ~34평형)
-            const targetPyeong = userSizeType ? userSizeType : "국민평형 전용 84㎡ (공급 약 30~34평형)";
-
-            const prompt = `
-            구글 검색(Google Grounding)을 통해 다음 아파트의 최신 실제 부동산 상세 스펙을 정밀히 조사해줘:
-            - 아파트 검색어: ${aptQuery}
-            - 희망 평형 타겟: ${targetPyeong} (만약 희망 평형 타겟이 비어있거나 모호하면, 전용 84㎡ 국민평형 근처 세대의 스펙을 대표값으로 삼아줘.)
-
-            조사할 주요 자산 스펙:
-            1. 행정 구역 대분류 (반드시 "서울특별시", "경기도", "인천광역시" 중 하나여야 함)
-            2. 상세 행정 구역 및 대표 입지명 (상세 가이드: "마포구 (아현)", "연수구 (송도)", "강남구 (대치)", "성남시 분당구 (판교)" 등 구/시 명칭 뒤에 대표동 명칭을 괄호안에 넣은 포맷이어야 함. 아래 제공될 지역 리스트 중 하나와 가장 가까운 것으로 매칭해줘)
-            3. 평균 대지지분 (단위: 평)
-            4. 대표 공급평형 (단위: 평, 예: 34평, 24평 등 실제 대표 평형)
-            5. 준공년도 기준 현재 경과연수 (단위: 년차, 현재 2026년 기준 계산)
-            6. 총 세대수 (단위: 세대)
-            7. 인근 빌라 평당 대지지분 가격 수준 (단위: 만원, 서울 최상급지 8000~13000, 마포/용산/성동 5000~8000, 외곽 및 경기/인천 2000~4500 범위에서 현실적인 가치 수렴)
-            8. 현재 대표 공급평형의 네이버 시세 또는 최근 실거래가 평균 수준 (단위: 억, 소수점 첫째자리까지 표시)
-            9. 평형 규격 명칭 (예: "34평형", "전용 84㎡")
-
-            지원되는 상세 행정 구역 매핑 리스트:
-            ${JSON.stringify(districtMap, null, 2)}
-            `;
-
-            const systemPrompt = `
-            너는 대한민국의 유능한 감정평가사 겸 AI 부동산 분석가이다.
-            사용자가 자연어로 입력한 특정 아파트에 대해 실시간 구글 검색(Grounding)을 엄격히 동원하여 사실에 입각한 실제 정보를 취합한 뒤, 반드시 아래 명시된 JSON 규격과 부합하는 구조화된 오브젝트로만 반환하라.
-            다른 수사구나 부가 설명 없이, 마크다운 백틱 문장 기호(예: \`\`\`json) 조차 생략하고 오로지 하나의 JSON String만 직접 출력해야 한다.
-            `;
-
-            const customConfig = {
-                responseMimeType: "application/json",
-                responseSchema: {
-                    type: "OBJECT",
-                    properties: {
-                        region: { type: "STRING", description: "행정 구역 대분류 ('서울특별시', '경기도', '인천광역시' 중 택일)" },
-                        district: { type: "STRING", description: "상세 자치구 대표 구역 (예: '마포구 (아현)', '연수구 (송도)')" },
-                        landArea: { type: "NUMBER", description: "평균 대지지분 숫자값 (평, 예: 12.5)" },
-                        supplySize: { type: "NUMBER", description: "공급면적 평수 숫자값 (평, 예: 34)" },
-                        buildingAge: { type: "NUMBER", description: "경과연수 숫자값 (년차, 예: 12)" },
-                        households: { type: "NUMBER", description: "총 세대수 숫자값 (세대, 예: 2400)" },
-                        villaLandPrice: { type: "NUMBER", description: "인근 빌라 평당 대지지분 가격 숫자값 (만원, 예: 4500)" },
-                        marketPrice: { type: "NUMBER", description: "현재 매매 호가 또는 최근 실거래가 숫자값 (억원, 예: 15.5)" },
-                        sizeType: { type: "STRING", description: "대표 평형 규격 텍스트 명칭 (예: '34평 A타입')" }
-                    },
-                    required: ["region", "district", "landArea", "supplySize", "buildingAge", "households", "villaLandPrice", "marketPrice", "sizeType"]
-                }
-            };
-
-            try {
-                const result = await fetchGeminiWithBackoff(prompt, systemPrompt, customConfig);
-                const rawJsonText = result.candidates?.[0]?.content?.parts?.[0]?.text;
-                
-                if (!rawJsonText) {
-                    throw new Error("정보를 찾을 수 없거나 데이터 수집이 지연되고 있습니다.");
-                }
-
-                const data = JSON.parse(rawJsonText);
-                writeDebugLog(`[AI 자연어 검색 결과 수신]: ${rawJsonText}`);
-
-                // Bind response data safely to slider bounds and inputs
-                elAptName.value = data.sizeType ? `${aptQuery}` : aptQuery; 
-                elSizeType.value = data.sizeType || "34평형 규격";
-                
-                slideLandArea.value = Math.max(1, Math.min(50, data.landArea || 15));
-                slideSupplySize.value = Math.max(10, Math.min(100, data.supplySize || 34));
-                slideBuildingAge.value = Math.max(0, Math.min(60, data.buildingAge || 25));
-                slideVillaPrice.value = Math.max(1000, Math.min(15000, data.villaLandPrice || 3500));
-                slideHouseholds.value = Math.max(10, Math.min(10000, data.households || 1000));
-                slideMarketPrice.value = Math.max(1, Math.min(100, data.marketPrice || 10));
-
-                // 🔄 스마트 행정구역 매핑 동적 바인딩
-                if (districtMap[data.region]) {
-                    elRegion.value = data.region;
-                    populateDistrictOptions();
-                    
-                    const targetDistrict = data.district;
-                    const options = Array.from(elDistrict.options).map(o => o.value);
-                    
-                    // Try exact match first
-                    let matchedDistrict = options.find(opt => opt === targetDistrict);
-                    if (!matchedDistrict) {
-                        // Try substring fuzzy fallback (resolves "마포구" into "마포구 (아현)")
-                        matchedDistrict = options.find(opt => opt.includes(targetDistrict) || targetDistrict.includes(opt.split(" ")[0]));
-                    }
-                    
-                    if (matchedDistrict) {
-                        elDistrict.value = matchedDistrict;
-                        writeDebugLog(`[매핑 완수] 행정구역이 "${data.region} ${matchedDistrict}"으로 자동 설정되었습니다.`);
-                    } else {
-                        elDistrict.selectedIndex = 0;
-                        writeDebugLog(`[매핑 보정] 상세 지역 매핑이 모호하여 기본값 "${options[0]}"으로 대체되었습니다.`);
-                    }
-                }
-
-                // Recalculate and update views
-                runRealTimeAnalysis();
-                
-                showToast(`[${aptQuery}]의 실제 등기부 스펙을 완벽하게 동기화했습니다!`, "success");
-
-            } catch (err) {
-                console.error(err);
-                showToast(err.message || "실시간 정보 수집 도중 오류가 발생했습니다.", "error");
-                writeDebugLog(`[AI 자동완성 에러]: ${err.message}`, true);
-            } finally {
-                btnAIAutofill.disabled = false;
-                btnAIAutofillText.textContent = "✨ AI 단지 정보 원클릭 자동 완성";
-            }
-        });
-
-        // Search bar listener
         tableSearch.addEventListener("input", renderMatrixTable);
 
         // App Run
